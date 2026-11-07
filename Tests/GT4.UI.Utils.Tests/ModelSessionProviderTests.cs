@@ -5,11 +5,11 @@ using Xunit;
 
 namespace GT4.UI.Utils.Tests;
 
-public class ModelSessionFactoryTests : IDisposable
+public class ModelSessionProviderTests : IDisposable
 {
   private readonly FixtureModelCache _Models = new();
 
-  public ModelSessionFactoryTests()
+  public ModelSessionProviderTests()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
@@ -18,12 +18,12 @@ public class ModelSessionFactoryTests : IDisposable
   public void Dispose() => _Models.Dispose();
 
   [Fact]
-  public async Task LoadSessionAsync_SameModelTwice_ReturnsTheLoadedSession()
+  public async Task GetSessionAsync_SameModelTwice_ReturnsTheLoadedSession()
   {
-    var factory = _Models.SessionFactory();
+    var provider = _Models.SessionProvider();
 
-    var first = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
-    var second = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var first = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var second = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
 
     second.Should().BeSameAs(first);
   }
@@ -31,13 +31,13 @@ public class ModelSessionFactoryTests : IDisposable
   [Fact]
   public async Task Release_DisposesTheSessionAndTheNextLoadOpensANewOne()
   {
-    var factory = _Models.SessionFactory();
-    var released = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var provider = _Models.SessionProvider();
+    var released = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     using var photo = new SKBitmap(16, 16);
 
-    factory.Release([RestorePhotoEnhancement.DetectorModel]);
+    provider.Release([RestorePhotoEnhancement.DetectorModel]);
 
-    var reloaded = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var reloaded = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     reloaded.Should().NotBeSameAs(released);
     using var mask = RestorePhotoEnhancement.DetectDamageMask(reloaded, photo);
     var act = () => RestorePhotoEnhancement.DetectDamageMask(released, photo);
@@ -48,13 +48,13 @@ public class ModelSessionFactoryTests : IDisposable
   [Fact]
   public async Task Release_LeavesModelsItWasNotGivenLoaded()
   {
-    var factory = _Models.SessionFactory();
-    var kept = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
-    await factory.LoadSessionAsync(RestorePhotoEnhancement.InpainterModel, CancellationToken.None);
+    var provider = _Models.SessionProvider();
+    var kept = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    await provider.GetSessionAsync(RestorePhotoEnhancement.InpainterModel, CancellationToken.None);
 
-    factory.Release([RestorePhotoEnhancement.InpainterModel]);
+    provider.Release([RestorePhotoEnhancement.InpainterModel]);
 
-    var again = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var again = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     again.Should().BeSameAs(kept);
   }
 }

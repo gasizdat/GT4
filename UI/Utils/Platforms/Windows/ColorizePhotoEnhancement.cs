@@ -18,11 +18,11 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     135444402);
   private const int ModelSize = 512;
 
-  private readonly IModelSessionFactory _SessionFactory;
+  private readonly IModelSessionProvider _SessionProvider;
 
-  public ColorizePhotoEnhancement(IModelSessionFactory sessionFactory)
+  public ColorizePhotoEnhancement(IModelSessionProvider sessionProvider)
   {
-    _SessionFactory = sessionFactory;
+    _SessionProvider = sessionProvider;
   }
 
   public string DisplayName => UIStrings.EnhancementColorize;
@@ -35,7 +35,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   {
     token.ThrowIfCancellationRequested();
 
-    var session = await _SessionFactory.LoadSessionAsync(Model, token);
+    var session = await _SessionProvider.GetSessionAsync(Model, token);
     var width = bitmap.Width;
     var height = bitmap.Height;
 
@@ -60,7 +60,7 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return ToOutputBitmap(fullL, ab, width, height);
   }
 
-  public void ReleaseModels() => _SessionFactory.Release(Models);
+  public void ReleaseModels() => _SessionProvider.Release(Models);
 
   private static DenseTensor<float> ToInputTensor(float[,] fullL, int width, int height)
   {

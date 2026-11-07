@@ -114,12 +114,12 @@ and is compared case-insensitively.
   model's cache name or its `.download` — the latter kept because the app isn't single-instance and
   another instance may be mid-download. This is what removes a retired model (e.g. the GFPGAN/YuNet
   pair) or a replaced model's previous bytes.
-- `ModelSessionFactory.LoadSessionAsync` (`UI/Utils/Platforms/Windows/ModelSessionFactory.cs`)
+- `ModelSessionProvider.GetSessionAsync` (`UI/Utils/Platforms/Windows/ModelSessionProvider.cs`)
   opens `InferenceSession` from the cached file's path, not a buffered stream — matters once a
   model gets into the hundreds of MB (LaMa is ~208MB); a `MemoryStream` copy would transiently
   double that.
 - Cache location: `IStorage.Models`, under `%APPDATA%\{app GUID}\.models`.
-- `ModelSessionFactory` owns every `InferenceSession`. It caches one per model, and a gate makes
+- `ModelSessionProvider` owns every `InferenceSession`. It caches one per model, and a gate makes
   a concurrent first load share a single session. The enhancers hold none themselves. A loaded
   session stays loaded until `PhotoEnhancer.ReleaseModels`. The person dialog and the family-name
   dialog call it as they complete, saved or cancelled. A person's own name dialogs can't enhance,

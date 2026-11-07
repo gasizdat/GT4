@@ -26,11 +26,11 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   // a tile padded by that much comes out identical to a single pass over the whole photo.
   private const int TilePadding = 34;
 
-  private readonly IModelSessionFactory _SessionFactory;
+  private readonly IModelSessionProvider _SessionProvider;
 
-  public UpscalePhotoEnhancement(IModelSessionFactory sessionFactory)
+  public UpscalePhotoEnhancement(IModelSessionProvider sessionProvider)
   {
-    _SessionFactory = sessionFactory;
+    _SessionProvider = sessionProvider;
   }
 
   public string DisplayName => UIStrings.EnhancementUpscale;
@@ -52,7 +52,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
       throw new InvalidOperationException(message);
     }
 
-    var session = await _SessionFactory.LoadSessionAsync(Model, token);
+    var session = await _SessionProvider.GetSessionAsync(Model, token);
 
     var inputName = session.InputMetadata.Keys.First();
     var outputName = session.OutputMetadata.Keys.First();
@@ -79,7 +79,7 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return upscaled.Resize(info, sampling);
   }
 
-  public void ReleaseModels() => _SessionFactory.Release(Models);
+  public void ReleaseModels() => _SessionProvider.Release(Models);
 
   private static DenseTensor<float> ToInputTensor(SKBitmap bitmap, SKRectI area)
   {

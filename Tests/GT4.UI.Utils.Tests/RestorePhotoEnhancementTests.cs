@@ -18,7 +18,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
-    var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
     using var photo = SKBitmap.Decode(HalfBlackHalfWhitePng(64, 48));
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -36,7 +36,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
-    var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
     // 600 wide, so the damage sits in the second, partial 512px tile column.
     using var photo = SKBitmap.Decode(WhiteSquarePng(600, 40, x: 540, y: 10, size: 20));
 
@@ -52,15 +52,15 @@ public class RestorePhotoEnhancementTests : IDisposable
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
-    var factory = _Models.SessionFactory();
-    var enhancement = new RestorePhotoEnhancement(factory);
-    var detector = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
-    var inpainter = await factory.LoadSessionAsync(RestorePhotoEnhancement.InpainterModel, CancellationToken.None);
+    var provider = _Models.SessionProvider();
+    var enhancement = new RestorePhotoEnhancement(provider);
+    var detector = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var inpainter = await provider.GetSessionAsync(RestorePhotoEnhancement.InpainterModel, CancellationToken.None);
 
     enhancement.ReleaseModels();
 
-    var reloadedDetector = await factory.LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
-    var reloadedInpainter = await factory.LoadSessionAsync(RestorePhotoEnhancement.InpainterModel, CancellationToken.None);
+    var reloadedDetector = await provider.GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var reloadedInpainter = await provider.GetSessionAsync(RestorePhotoEnhancement.InpainterModel, CancellationToken.None);
     reloadedDetector.Should().NotBeSameAs(detector);
     reloadedInpainter.Should().NotBeSameAs(inpainter);
   }
@@ -69,7 +69,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   public async Task MissingInpainterModel_SurfacesModelDownloadException()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
     using var photo = SKBitmap.Decode(HalfBlackHalfWhitePng(64, 48));
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -81,7 +81,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   public async Task ThinDamagedLine_DilatesTheMaskBeyondTheDetectorsRawThreshold()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var detector = await _Models.SessionProvider().GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     // 256x256 so the detector's working resolution maps 1:1 onto photo pixels -- the dilation's
     // 3-detector-pixel reach is then directly observable.
     using var bitmap = SKBitmap.Decode(HorizontalLinePng(256, 256, 128, 1));
@@ -103,7 +103,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   public async Task LargePhoto_DilationMarginStaysBoundedRegardlessOfDownsampleRatio()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var detector = await _Models.SessionProvider().GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     // 2048x2048 downsamples to a 256x256 detector input (an 8x ratio) -- large enough that
     // dilating in the detector's own low resolution before upsampling, instead of after, would
     // make the margin visibly wrong (8x too wide on each side) rather than just imprecise.
@@ -124,7 +124,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   public async Task OnePixelLinesOnALargePhoto_AreAveragedBelowTheThreshold()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
-    var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
+    var detector = await _Models.SessionProvider().GetSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     // An 8x shrink that doesn't average reads row 1024 (corner-aligned) or row 1027 (centre-aligned,
     // nearest or linear) of each 8-row block. Averaged, the two lines are 2/8 white, under the
     // identity detector's threshold.
@@ -144,7 +144,7 @@ public class RestorePhotoEnhancementTests : IDisposable
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     // No lama-fp32.onnx seeded, and the factory's downloader always fails -- if the enhancer
     // tried to load the inpainter for an undamaged photo, this would throw ModelDownloadException.
-    var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
     using var photo = SKBitmap.Decode(SolidColorPng(20, 16, 0, 0, 0));
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -155,7 +155,7 @@ public class RestorePhotoEnhancementTests : IDisposable
   [Fact]
   public async Task MissingDetectorModel_SurfacesModelDownloadException()
   {
-    var enhancement = new RestorePhotoEnhancement(_Models.SessionFactory());
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
     using var photo = SKBitmap.Decode(SolidColorPng(10, 10, 255, 255, 255));
 
     var act = () => enhancement.ApplyAsync(photo, CancellationToken.None);

@@ -35,12 +35,12 @@ internal sealed class FixtureModelCache : IDisposable
     _FileSystem.Copy(fixture, new FileDescription(_Storage.Models, model.CacheFileName, null));
   }
 
-  public IModelSessionFactory SessionFactory()
+  public IModelSessionProvider SessionProvider()
   {
     var factory = new Mock<IHttpClientFactory>();
     factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(new FailingHandler()));
     var downloader = new ModelDownloader(factory.Object, _FileSystem, _Storage);
-    return new ModelSessionFactory(downloader, _FileSystem, _Storage);
+    return new ModelSessionProvider(downloader, _FileSystem, _Storage);
   }
 
   private sealed class FailingHandler : HttpMessageHandler

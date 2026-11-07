@@ -40,11 +40,11 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   // upsampled would scale the margin by the photo/detector downsample ratio instead.
   private const int MaskDilationIterations = 3;
 
-  private readonly IModelSessionFactory _SessionFactory;
+  private readonly IModelSessionProvider _SessionProvider;
 
-  public RestorePhotoEnhancement(IModelSessionFactory sessionFactory)
+  public RestorePhotoEnhancement(IModelSessionProvider sessionProvider)
   {
-    _SessionFactory = sessionFactory;
+    _SessionProvider = sessionProvider;
   }
 
   public string DisplayName => UIStrings.EnhancementRestore;
@@ -57,7 +57,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   {
     token.ThrowIfCancellationRequested();
 
-    var detector = await _SessionFactory.LoadSessionAsync(DetectorModel, token);
+    var detector = await _SessionProvider.GetSessionAsync(DetectorModel, token);
     using var mask = DetectDamageMask(detector, bitmap);
     if (!HasAnyDamage(mask))
     {
@@ -67,7 +67,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return await InpaintAsync(bitmap, mask, token);
   }
 
-  public void ReleaseModels() => _SessionFactory.Release(Models);
+  public void ReleaseModels() => _SessionProvider.Release(Models);
 
   internal static SKBitmap DetectDamageMask(InferenceSession detector, SKBitmap bitmap)
   {
@@ -152,7 +152,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
   private async Task<SKBitmap> InpaintAsync(SKBitmap bitmap, SKBitmap mask, CancellationToken token)
   {
-    var inpainter = await _SessionFactory.LoadSessionAsync(InpainterModel, token);
+    var inpainter = await _SessionProvider.GetSessionAsync(InpainterModel, token);
 
     using var inpaintedFull = bitmap.Copy();
     for (var tileY = 0; tileY < bitmap.Height; tileY += InpaintTileSize)

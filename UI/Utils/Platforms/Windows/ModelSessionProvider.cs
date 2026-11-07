@@ -6,18 +6,12 @@ using IFileSystem = GT4.Core.Utils.IFileSystem;
 
 namespace GT4.UI.Utils.Platforms.Windows;
 
-public interface IModelSessionFactory
-{
-  Task<InferenceSession> LoadSessionAsync(ModelDescriptor model, CancellationToken token);
-  void Release(ModelDescriptor[] models);
-}
-
-internal class ModelSessionFactory(IModelDownloader downloader, IFileSystem fileSystem, IStorage storage) : IModelSessionFactory
+internal class ModelSessionProvider(IModelDownloader downloader, IFileSystem fileSystem, IStorage storage) : IModelSessionProvider
 {
   private readonly Dictionary<ModelDescriptor, InferenceSession> _Sessions = new();
   private readonly SemaphoreSlim _Gate = new(1, 1);
 
-  public async Task<InferenceSession> LoadSessionAsync(ModelDescriptor model, CancellationToken token)
+  public async Task<InferenceSession> GetSessionAsync(ModelDescriptor model, CancellationToken token)
   {
     await _Gate.WaitAsync(token);
     try
