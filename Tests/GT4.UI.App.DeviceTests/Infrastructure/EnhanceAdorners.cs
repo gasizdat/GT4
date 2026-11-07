@@ -17,6 +17,24 @@ internal static class EnhanceAdorners
       found => found.Length == photos.Count,
       timeoutMessage: "The CollectionView's enhance adorners never materialized.");
 
+  // An attachment's adorner hides through its own binding or through the wrapper around it.
+  public static bool IsShown(Element element) =>
+    element is not VisualElement visual || visual.IsVisible && (element.Parent is null || IsShown(element.Parent));
+
+  // Every adorner is hidden until its attachment's content decodes, so a hidden one means nothing before that.
+  public static async Task<(bool Image, bool Document)> AttachmentsShownAsync(
+    Page dialog, ICollection<PersonDataItem> attachments, string commandName)
+  {
+    var adorners = await WaitAsync(dialog, attachments, commandName);
+    var image = adorners.Single(adorner => Photo(adorner).Info.MimeType == "image/png");
+    var document = adorners.Single(adorner => Photo(adorner).Info.MimeType == "application/pdf");
+    await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => attachments.All(attachment => attachment.Content is not null)),
+      loaded => loaded,
+      timeoutMessage: "The attachments never loaded.");
+    return await MainThread.InvokeOnMainThreadAsync(() => (IsShown(image), IsShown(document)));
+  }
+
   public static PersonDataItem Photo(Button adorner) =>
     (PersonDataItem)((AdornerCommandParameter)adorner.CommandParameter).Element;
 

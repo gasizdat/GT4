@@ -3,8 +3,10 @@ using GT4.Core.Project.Dto;
 using GT4.UI.Converters;
 using GT4.UI.Items;
 using GT4.UI.Utils;
+using GT4.UI.Utils.Converters;
 using Microsoft.Extensions.Http;
 using Moq;
+using SkiaSharp;
 using Xunit;
 
 namespace GT4.UI.DeviceTests;
@@ -64,7 +66,7 @@ public class AttachmentDataConverterTests
   }
 
   [Fact]
-  public async Task FromObjectAsync_returns_null_for_input_that_is_not_an_AttachmentPick()
+  public async Task FromObjectAsync_returns_null_for_input_it_cannot_encode()
   {
     var result = await Converter(DataCategory.PersonAttachment).FromObjectAsync("not a pick", CancellationToken.None);
 
@@ -103,5 +105,34 @@ public class AttachmentDataConverterTests
     var result = await Converter(DataCategory.FamilyAttachment).FromObjectAsync(pick, CancellationToken.None);
 
     Assert.Equal(DataCategory.FamilyAttachment, result?.Category);
+  }
+
+  [Theory]
+  [InlineData(DataCategory.PersonAttachment)]
+  [InlineData(DataCategory.FamilyAttachment)]
+  public async Task FromObjectAsync_encodes_a_new_image_as_a_new_attachment_typed_by_its_bytes(DataCategory category)
+  {
+    var jpeg = Jpeg();
+    var source = new Data(5, GedcomPhotoResidue.EncodeAttachment(TestImages.ValidPng, "scan.png"), "image/png", category);
+    var image = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(jpeg)), "Not the title");
+    var copy = new AttachmentInfo("scan.png", "Deed (Doubled)", source, image);
+
+    var result = await Converter(category).FromObjectAsync(copy, CancellationToken.None);
+
+    Assert.NotNull(result);
+    Assert.Equal(ElementId.NonCommittedId, result.Id);
+    Assert.Equal(category, result.Category);
+    Assert.Equal("image/jpeg", result.MimeType);
+    Assert.Equal(jpeg, GedcomPhotoResidue.ExtractImageBytes(result.Content));
+    Assert.Equal("scan.jpeg", await GedcomPhotoResidue.ExtractFileNameAsync(result, CancellationToken.None));
+    Assert.Equal("Deed (Doubled)", await GedcomPhotoResidue.ExtractTitleAsync(result, CancellationToken.None));
+  }
+
+  private static byte[] Jpeg()
+  {
+    using var bitmap = new SKBitmap(2, 2);
+    bitmap.Erase(SKColors.Blue);
+    using var data = bitmap.Encode(SKEncodedImageFormat.Jpeg, 85);
+    return data.ToArray();
   }
 }

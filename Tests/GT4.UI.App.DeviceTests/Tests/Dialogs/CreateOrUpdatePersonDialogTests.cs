@@ -782,6 +782,71 @@ public class CreateOrUpdatePersonDialogTests
     services.ModelDownloader.Verify(d => d.EnsureModelAsync(It.IsAny<ModelDescriptor>(), It.IsAny<CancellationToken>()), Times.Never());
   }
 
+  private static Task<(bool Image, bool Document)> AttachmentAdornersShownAsync(CreateOrUpdatePersonDialog dialog) =>
+    EnhanceAdorners.AttachmentsShownAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand");
+
+  [Fact]
+  public async Task Only_an_image_attachment_offers_the_enhance_adorner()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(20, "scan.png", "image/png"), Attachment(21)] };
+    var (dialog, _) = await CreateEnhancingDialogAsync(new TestServices(), person, new DoublingEnhancement());
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var shown = await AttachmentAdornersShownAsync(dialog);
+
+    Assert.True(shown.Image);
+    Assert.False(shown.Document);
+  }
+
+  [Fact]
+  public async Task No_attachment_enhance_adorner_shows_when_no_enhancement_is_registered()
+  {
+    var person = CreateSamplePerson() with { Attachments = [Attachment(20, "scan.png", "image/png"), Attachment(21)] };
+    var (dialog, _) = await CreateEnhancingDialogAsync(new TestServices(), person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    var shown = await AttachmentAdornersShownAsync(dialog);
+
+    Assert.False(shown.Image);
+    Assert.False(shown.Document);
+  }
+
+  [Fact]
+  public async Task EnhanceAttachmentCommand_adds_its_copy_as_an_attachment_right_after_it_and_no_photo()
+  {
+    var services = new TestServices();
+    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
+    var titled = await GedcomPhotoResidue.WithTitleAsync(image, "Deed", CancellationToken.None);
+    var person = CreateSamplePerson() with { Attachments = [titled with { Id = 20 }, Attachment(21)] };
+    var enhancement = new DoublingEnhancement();
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var photos = dialog.Photos.ToArray();
+    var source = dialog.Attachments.First();
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
+
+    await EnhanceAdorners.TapAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand", source);
+    var attachments = await WaitForAsync(
+      () => dialog.Attachments.ToArray(), items => items.Length == 3, "The enhanced attachment was never added.");
+
+    Assert.Same(source, attachments[0]);
+    Assert.Equal(photos, dialog.Photos);
+    var saved = await SaveAsync(dialog);
+
+    Assert.Equal(new SKSizeI(4, 3), enhancement.Received);
+    Assert.Equal(10, saved.MainPhoto!.Id);
+    Assert.Equal(new[] { 11, 12 }, saved.AdditionalPhotos.Select(photo => photo.Id));
+    Assert.Equal(new[] { 20, ElementId.NonCommittedId, 21 }, saved.Attachments.Select(attachment => attachment.Id));
+    var copy = saved.Attachments[1];
+    Assert.Equal(DataCategory.PersonAttachment, copy.Category);
+    Assert.Equal("image/jpeg", copy.MimeType);
+    Assert.Equal("Deed (Doubled)", await GedcomPhotoResidue.ExtractTitleAsync(copy, CancellationToken.None));
+    Assert.Equal("scan.jpeg", await GedcomPhotoResidue.ExtractFileNameAsync(copy, CancellationToken.None));
+    Assert.Equal(new SKSizeI(8, 6), ImageSize(GedcomPhotoResidue.ExtractImageBytes(copy.Content)));
+    Assert.Equal(new SKSizeI(4, 3), ImageSize(GedcomPhotoResidue.ExtractImageBytes(saved.Attachments[0].Content)));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
   [Fact]
   public async Task SaveCommand_UntouchedTaggedMainPhoto_SurvivesByteForByte()
   {
