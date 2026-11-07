@@ -78,9 +78,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   internal static SKBitmap DetectDamageMask(InferenceSession detector, SKBitmap bitmap)
   {
     var (dw, dh) = ShortSideTo(bitmap.Width, bitmap.Height, DetectorInputSize);
-    // Upstream shrinks with Pillow's BICUBIC, whose kernel widens with the reduction, so it
-    // averages. Skia's cubic keeps a fixed kernel and aliases like point sampling: a thin line
-    // lands at full contrast or vanishes, depending on the row. Linear mipmaps average instead.
+    // Averages like upstream's Pillow BICUBIC, whose kernel widens when shrinking. Skia's cubic
+    // keeps a fixed kernel and aliases instead.
     var info = new SKImageInfo(dw, dh);
     var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
     using var resized = bitmap.Resize(info, sampling);

@@ -105,18 +105,22 @@ public class RestorePhotoEnhancementTests : IDisposable
   }
 
   [Fact]
-  public async Task OnePixelLineOnALargePhoto_IsAveragedBelowTheThreshold()
+  public async Task OnePixelLinesOnALargePhoto_AreAveragedBelowTheThreshold()
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     var detector = await _Models.SessionFactory().LoadSessionAsync(RestorePhotoEnhancement.DetectorModel, CancellationToken.None);
     using var _ = detector;
-    // Row 1024 is one that point sampling at the 8x reduction reads at full contrast; averaged,
-    // the line is 1/8 white, under the identity detector's threshold.
+    // An 8x shrink that doesn't average reads row 1024 (corner-aligned) or row 1027 (centre-aligned,
+    // nearest or linear) of each 8-row block. Averaged, the two lines are 2/8 white, under the
+    // identity detector's threshold.
     using var bitmap = SKBitmap.Decode(HorizontalLinePng(2048, 2048, 1024, 1));
+    using var canvas = new SKCanvas(bitmap);
+    canvas.DrawRect(0, 1027, 2048, 1, new SKPaint { Color = SKColors.White });
 
     using var mask = RestorePhotoEnhancement.DetectDamageMask(detector, bitmap);
 
     mask.GetPixel(1024, 1024).Should().Be(SKColors.Black);
+    mask.GetPixel(1024, 1027).Should().Be(SKColors.Black);
   }
 
   [Fact]
