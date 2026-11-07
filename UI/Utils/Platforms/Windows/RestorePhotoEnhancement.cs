@@ -31,6 +31,9 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
   // Carve/LaMa-ONNX's lama_fp32.onnx is exported at a fixed 512x512.
   private const int InpaintTileSize = 512;
+  // Tiles overlap by at least this much, and each one's result fades out over it toward an edge
+  // with more photo beyond: a fill near that edge was made without seeing across it.
+  private const int InpaintTileOverlap = 128;
 
   // BOPBTL's own Global/test.py dilates the detector's raw per-pixel mask with a 3x3 kernel over
   // this many iterations before inpainting -- an undilated mask is a 1-detector-pixel-wide line,
@@ -155,9 +158,10 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var inpainter = await _SessionProvider.GetSessionAsync(InpainterModel, token);
 
     using var inpaintedFull = bitmap.Copy();
-    for (var tileY = 0; tileY < bitmap.Height; tileY += InpaintTileSize)
+    var weights = new float[bitmap.Height, bitmap.Width];
+    foreach (var tileY in TileOrigins(bitmap.Height))
     {
-      for (var tileX = 0; tileX < bitmap.Width; tileX += InpaintTileSize)
+      foreach (var tileX in TileOrigins(bitmap.Width))
       {
         token.ThrowIfCancellationRequested();
         if (!TileHasDamage(mask, tileX, tileY))
@@ -166,13 +170,24 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
         }
 
         using var tileResult = InpaintTile(inpainter, bitmap, mask, tileX, tileY);
-        CopyTileInto(inpaintedFull, tileResult, tileX, tileY);
+        BlendTileInto(inpaintedFull, weights, tileResult, tileX, tileY);
       }
     }
 
     var output = new SKBitmap(bitmap.Width, bitmap.Height);
     CompositeMaskedPixels(bitmap, inpaintedFull, mask, output);
     return output;
+  }
+
+  // Spreads the fewest tiles that keep every overlap at least InpaintTileOverlap evenly over the
+  // length, so none hangs past the photo into reflect padding unless the photo is smaller than one.
+  private static IEnumerable<int> TileOrigins(int length)
+  {
+    var span = Math.Max(0, length - InpaintTileSize);
+    var stride = InpaintTileSize - InpaintTileOverlap;
+    var steps = (span + stride - 1) / stride;
+    var divisor = Math.Max(1, steps);
+    return Enumerable.Range(0, steps + 1).Select(i => i * span / divisor);
   }
 
   private static bool TileHasDamage(SKBitmap mask, int tileX, int tileY) => HasDamageIn(
@@ -232,17 +247,37 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return tile;
   }
 
-  private static void CopyTileInto(SKBitmap destination, SKBitmap tile, int tileX, int tileY)
+  // Keeps each destination pixel the weighted average of every tile blended into it so far; the
+  // first tile to reach a pixel replaces the source copy outright.
+  private static void BlendTileInto(SKBitmap destination, float[,] weights, SKBitmap tile, int tileX, int tileY)
   {
     var endY = Math.Min(tileY + InpaintTileSize, destination.Height);
     var endX = Math.Min(tileX + InpaintTileSize, destination.Width);
     for (var y = tileY; y < endY; y++)
     {
+      var weightY = TileEdgeWeight(y - tileY, tileY, destination.Height);
       for (var x = tileX; x < endX; x++)
       {
-        destination.SetPixel(x, y, tile.GetPixel(x - tileX, y - tileY));
+        var weight = weightY * TileEdgeWeight(x - tileX, tileX, destination.Width);
+        var total = weights[y, x] + weight;
+        var share = weight / total;
+        var current = destination.GetPixel(x, y);
+        var added = tile.GetPixel(x - tileX, y - tileY);
+        byte Mix(byte from, byte to) => (byte)MathF.Round(from + (to - from) * share);
+        destination.SetPixel(x, y, new SKColor(
+          Mix(current.Red, added.Red), Mix(current.Green, added.Green), Mix(current.Blue, added.Blue)));
+        weights[y, x] = total;
       }
     }
+  }
+
+  private static float TileEdgeWeight(int offset, int origin, int length)
+  {
+    var fromStart = origin > 0 ? offset + 1 : InpaintTileOverlap;
+    var toEnd = origin + InpaintTileSize < length ? InpaintTileSize - offset : InpaintTileOverlap;
+    var nearest = Math.Min(fromStart, toEnd);
+    var distance = Math.Min(nearest, InpaintTileOverlap);
+    return distance / (float)InpaintTileOverlap;
   }
 
   // Every unmasked pixel stays exactly the source pixel -- the invariant #506 calls for.

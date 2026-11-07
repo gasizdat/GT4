@@ -37,7 +37,7 @@ public class RestorePhotoEnhancementTests : IDisposable
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
     var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
-    // 600 wide, so the damage sits in the second, partial 512px tile column.
+    // 600 wide, so the damage lies outside the first 512px tile.
     using var photo = SKBitmap.Decode(WhiteSquarePng(600, 40, x: 540, y: 10, size: 20));
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
@@ -45,6 +45,24 @@ public class RestorePhotoEnhancementTests : IDisposable
     bitmap.GetPixel(550, 20).Should().Be(new SKColor(128, 128, 128));
     bitmap.GetPixel(100, 20).Should().Be(new SKColor(0, 0, 0));
     bitmap.GetPixel(590, 20).Should().Be(new SKColor(0, 0, 0));
+  }
+
+  [Fact]
+  public async Task DamageAcrossTileEdges_IsFilledWithoutASeam()
+  {
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-mean.onnx");
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
+    // The inpainter fills a tile with its mean colour, so tiles further along the dark gradient
+    // fill the full-width white band lighter.
+    using var photo = SKBitmap.Decode(GradientWithBandPng(1100, 40, bandY: 15, bandHeight: 10));
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    var band = Enumerable.Range(0, bitmap.Width).Select(x => (int)bitmap.GetPixel(x, 20).Red).ToArray();
+    var next = band.Skip(1);
+    var steps = band.Zip(next, (left, right) => Math.Abs(right - left)).ToArray();
+    steps.Max().Should().BeLessThanOrEqualTo(1);
   }
 
   [Fact]
@@ -200,6 +218,19 @@ public class RestorePhotoEnhancementTests : IDisposable
     using var surface = SKSurface.Create(info);
     surface.Canvas.Clear(SKColors.Black);
     surface.Canvas.DrawRect(x, y, size, size, new SKPaint { Color = SKColors.White });
+    using var image = surface.Snapshot();
+    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+    return data.ToArray();
+  }
+
+  private static byte[] GradientWithBandPng(int width, int height, int bandY, int bandHeight)
+  {
+    var info = new SKImageInfo(width, height);
+    using var surface = SKSurface.Create(info);
+    var colors = new[] { SKColors.Black, new SKColor(70, 70, 70) };
+    using var gradient = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(width, 0), colors, SKShaderTileMode.Clamp);
+    surface.Canvas.DrawRect(0, 0, width, height, new SKPaint { Shader = gradient });
+    surface.Canvas.DrawRect(0, bandY, width, bandHeight, new SKPaint { Color = SKColors.White });
     using var image = surface.Snapshot();
     using var data = image.Encode(SKEncodedImageFormat.Png, 100);
     return data.ToArray();
