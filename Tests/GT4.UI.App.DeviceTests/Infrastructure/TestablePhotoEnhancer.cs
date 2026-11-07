@@ -7,12 +7,12 @@ namespace GT4.UI.DeviceTests;
 
 internal sealed class TestablePhotoEnhancer : PhotoEnhancer
 {
-  public TestablePhotoEnhancer(TestServices services, IPhotoEnhancement[] enhancements)
+  public TestablePhotoEnhancer(TestServices services, IPhotoEnhancement[] enhancements, DataConverterResolver? dataConverterResolver = null)
     : base(
       enhancements,
       services.ModelDownloader.Object,
       services.AlertService.Object,
-      services.Provider.GetRequiredService<DataConverterResolver>())
+      dataConverterResolver ?? services.Provider.GetRequiredService<DataConverterResolver>())
   {
   }
 

@@ -341,10 +341,13 @@ public class CreateOrUpdatePersonDialogTests
     Assert.DoesNotContain(photo, dialog.Photos);
   }
 
+  private static Task<(TestableCreateOrUpdatePersonDialog, TestablePhotoEnhancer)> CreateEnhancingDialogAsync(
+    TestServices services, PersonFullInfo person, params IPhotoEnhancement[] enhancements) =>
+    CreateEnhancingDialogAsync(services, person, new TestablePhotoEnhancer(services, enhancements));
+
   private static async Task<(TestableCreateOrUpdatePersonDialog, TestablePhotoEnhancer)> CreateEnhancingDialogAsync(
-    TestServices services, PersonFullInfo person, params IPhotoEnhancement[] enhancements)
+    TestServices services, PersonFullInfo person, TestablePhotoEnhancer enhancer)
   {
-    var enhancer = new TestablePhotoEnhancer(services, enhancements);
     var factory = services.Provider.GetRequiredService<TestableCreateOrUpdatePersonDialog.Factory>() with { PhotoEnhancer = enhancer };
     await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
     var dialog = await MainThread.InvokeOnMainThreadAsync(() => factory.Create(person));
@@ -845,6 +848,47 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal(new SKSizeI(8, 6), ImageSize(GedcomPhotoResidue.ExtractImageBytes(copy.Content)));
     Assert.Equal(new SKSizeI(4, 3), ImageSize(GedcomPhotoResidue.ExtractImageBytes(saved.Attachments[0].Content)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  private sealed class RecordingConverter(IDataConverter inner) : IDataConverter
+  {
+    public object? Encoded { get; private set; }
+
+    public Task<Data?> FromObjectAsync(object? data, CancellationToken token)
+    {
+      Encoded = data;
+      return inner.FromObjectAsync(data, token);
+    }
+
+    public Task<object?> ToObjectAsync(Data? data, CancellationToken token) => inner.ToObjectAsync(data, token);
+  }
+
+  // The converter writes only Title, so a caption left on the image would be a second, ignored copy of it.
+  [Fact]
+  public async Task EnhanceAttachmentCommand_keeps_the_marked_title_off_the_copys_image()
+  {
+    var services = new TestServices();
+    var resolver = services.Provider.GetRequiredService<DataConverterResolver>();
+    var recorder = new RecordingConverter(resolver(DataCategory.PersonAttachment));
+    var enhancement = new DoublingEnhancement();
+    var enhancer = new TestablePhotoEnhancer(
+      services, [enhancement], category => category.IsAttachment() ? recorder : resolver(category))
+    {
+      EnhancementAnswer = enhancement.DisplayName
+    };
+    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
+    var titled = await GedcomPhotoResidue.WithTitleAsync(image, "Deed", CancellationToken.None);
+    var person = CreateSamplePerson() with { Attachments = [titled with { Id = 20 }] };
+    var (dialog, _) = await CreateEnhancingDialogAsync(services, person, enhancer);
+    await using var window = await WindowHost.AttachAsync(dialog);
+
+    await EnhanceAdorners.TapAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand", dialog.Attachments.Single());
+    await WaitForAsync(() => dialog.Attachments.Count, count => count == 2, "The enhanced attachment was never added.");
+
+    var copy = Assert.IsType<AttachmentInfo>(recorder.Encoded);
+    Assert.Equal("Deed (Doubled)", copy.Title);
+    Assert.NotNull(copy.Image);
+    Assert.Null(copy.Image.Caption);
   }
 
   [Fact]
