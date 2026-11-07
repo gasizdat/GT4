@@ -105,109 +105,109 @@
                 <CollectionView.ItemTemplate>
                   <DataTemplate>
                     <VerticalStackLayout>
-                    <Grid
-                        x:Name="FamilyPhoto"
-                        ColumnDefinitions="*, Auto, Auto"
-                        RowDefinitions="Auto, Auto, *"
-                        Style="{StaticResource HoverItem}">
+                      <Grid
+                          x:Name="FamilyPhoto"
+                          ColumnDefinitions="*, Auto, Auto"
+                          RowDefinitions="Auto, Auto, *"
+                          Style="{StaticResource HoverItem}">
 
-                      <Image
-                          Grid.Row="0"
-                          Grid.RowSpan="3"
-                          Grid.Column="0"
-                          Grid.ColumnSpan="3"
-                          Source="{Binding Content.Source}"
-                          Style="{StaticResource PhotoPreviewStyle}" />
+                        <Image
+                            Grid.Row="0"
+                            Grid.RowSpan="3"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="3"
+                            Source="{Binding Content.Source}"
+                            Style="{StaticResource PhotoPreviewStyle}" />
 
-                      <Button
-                          Grid.Row="0"
-                          Grid.Column="0"
-                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                          IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
-                          Style="{StaticResource EnhanceAdorner}">
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
+                            Style="{StaticResource EnhanceAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="EnhanceFamilyPhotoCommand"
-                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EnhanceFamilyPhotoCommand"
+                                Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="0"
-                          Grid.Column="1"
-                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource EditAdorner}">
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource EditAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="EditFamilyPhotoCommand"
-                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditFamilyPhotoCommand"
+                                Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="0"
-                          Grid.Column="2"
-                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource DeleteAdorner}">
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource DeleteAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="RemoveFamilyPhotoCommand"
-                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="RemoveFamilyPhotoCommand"
+                                Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="1"
-                          Grid.Column="1"
-                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource LeftAdorner}">
+                        <Button
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource LeftAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="MoveFamilyPhotoToLeftCommand"
-                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="MoveFamilyPhotoToLeftCommand"
+                                Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Button
-                          Grid.Row="1"
-                          Grid.Column="2"
-                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource RightAdorner}">
+                        <Button
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource RightAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="MoveFamilyPhotoToRightCommand"
-                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="MoveFamilyPhotoToRightCommand"
+                                Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                    </Grid>
+                      </Grid>
 
-                    <Grid
-                        ColumnDefinitions="Auto, *"
-                        WidthRequest="{StaticResource PhotoWidth}">
-                      <Button
-                          Grid.Column="0"
-                          Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                          Style="{StaticResource CaptionAdorner}">
+                      <Grid
+                          ColumnDefinitions="Auto, *"
+                          WidthRequest="{StaticResource PhotoWidth}">
+                        <Button
+                            Grid.Column="0"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
 
-                        <Button.CommandParameter>
-                          <components:AdornerCommandParameter
-                              CommandName="EditCaptionCommand"
-                              Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
-                        </Button.CommandParameter>
-                      </Button>
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference FamilyPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
-                      <Label
-                          Grid.Column="1"
-                          Style="{StaticResource FieldValue}"
-                          Text="{Binding Caption}"
-                          VerticalOptions="Center" />
-                    </Grid>
+                        <Label
+                            Grid.Column="1"
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </Grid>
                     </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -257,29 +257,6 @@
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
-
-                      <Grid
-                          Grid.Row="1"
-                          Grid.Column="0"
-                          ColumnDefinitions="Auto, *">
-                        <Button
-                            Grid.Column="0"
-                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
-                            Style="{StaticResource CaptionAdorner}">
-
-                          <Button.CommandParameter>
-                            <components:AdornerCommandParameter
-                                CommandName="EditCaptionCommand"
-                                Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
-                          </Button.CommandParameter>
-                        </Button>
-
-                        <Label
-                            Grid.Column="1"
-                            Style="{StaticResource FieldValue}"
-                            Text="{Binding Caption}"
-                            VerticalOptions="Center" />
-                      </Grid>
 
                       <ContentView
                           Grid.Row="0"
@@ -359,6 +336,29 @@
                               Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
+
+                      <Grid
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          ColumnDefinitions="Auto, *">
+                        <Button
+                            Grid.Column="0"
+                            Command="{Binding MediaCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference FamilyAttachment}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Grid.Column="1"
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </Grid>
 
                     </Grid>
                   </DataTemplate>
