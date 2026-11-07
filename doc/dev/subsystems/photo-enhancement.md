@@ -85,8 +85,8 @@ Two models in sequence, over the whole photo, not per-face:
    128 px toward an edge with more photo beyond it, since LaMa saw nothing across that edge.
    Without the overlap, a repair crossing a tile edge showed a hard seam (#574): two tiles filled
    their halves independently, and damage touching a tile's edge was filled with invented colour.
-   The overlap costs about 1.7x the tiles: 20 instead of 12 on a 1426x1928 photo, 74 s instead of
-   52 s. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
+   On a heavily cracked 1426x1928 photo, where every tile has damage, 20 tiles run instead of 12:
+   74 s instead of 52 s, both including LaMa's 8 s load. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
    where the mask marks damage — every other pixel stays exactly the source pixel.
 
 A photo whose mask marks nothing is refused ("no damage was found") rather than returned as a

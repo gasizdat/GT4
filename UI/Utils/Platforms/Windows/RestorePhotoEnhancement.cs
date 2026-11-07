@@ -179,9 +179,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return output;
   }
 
-  // Spreads the fewest tiles that keep every overlap at least InpaintTileOverlap evenly over the
-  // length, so none hangs past the photo into reflect padding unless the photo is smaller than one.
-  private static IEnumerable<int> TileOrigins(int length)
+  // Spread evenly so the last tile ends at the photo's edge, not past it in reflect padding.
+  internal static IEnumerable<int> TileOrigins(int length)
   {
     var span = Math.Max(0, length - InpaintTileSize);
     var stride = InpaintTileSize - InpaintTileOverlap;
@@ -247,8 +246,7 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return tile;
   }
 
-  // Keeps each destination pixel the weighted average of every tile blended into it so far; the
-  // first tile to reach a pixel replaces the source copy outright.
+  // A running weighted average; the source copy it starts from carries no weight.
   private static void BlendTileInto(SKBitmap destination, float[,] weights, SKBitmap tile, int tileX, int tileY)
   {
     var endY = Math.Min(tileY + InpaintTileSize, destination.Height);

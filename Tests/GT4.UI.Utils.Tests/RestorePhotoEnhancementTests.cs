@@ -47,22 +47,37 @@ public class RestorePhotoEnhancementTests : IDisposable
     bitmap.GetPixel(590, 20).Should().Be(new SKColor(0, 0, 0));
   }
 
-  [Fact]
-  public async Task DamageAcrossTileEdges_IsFilledWithoutASeam()
+  [Theory]
+  [InlineData(1100, 40)]
+  [InlineData(40, 1100)]
+  public async Task DamageAcrossTileEdges_IsFilledWithoutASeam(int width, int height)
   {
     _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
     _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-mean.onnx");
     var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
     // The inpainter fills a tile with its mean colour, so tiles further along the dark gradient
-    // fill the full-width white band lighter.
-    using var photo = SKBitmap.Decode(GradientWithBandPng(1100, 40, bandY: 15, bandHeight: 10));
+    // fill the white band down its middle lighter.
+    using var photo = SKBitmap.Decode(GradientWithBandPng(width, height));
 
     using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
 
-    var band = Enumerable.Range(0, bitmap.Width).Select(x => (int)bitmap.GetPixel(x, 20).Red).ToArray();
+    var horizontal = width > height;
+    var length = Math.Max(width, height);
+    SKColor BandPixel(int i) => horizontal ? bitmap.GetPixel(i, height / 2) : bitmap.GetPixel(width / 2, i);
+    var band = Enumerable.Range(0, length).Select(i => (int)BandPixel(i).Red).ToArray();
     var next = band.Skip(1);
-    var steps = band.Zip(next, (left, right) => Math.Abs(right - left)).ToArray();
+    var steps = band.Zip(next, (previous, current) => Math.Abs(current - previous)).ToArray();
     steps.Max().Should().BeLessThanOrEqualTo(1);
+  }
+
+  [Theory]
+  [InlineData(300, new[] { 0 })]
+  [InlineData(512, new[] { 0 })]
+  [InlineData(600, new[] { 0, 88 })]
+  [InlineData(1426, new[] { 0, 304, 609, 914 })]
+  public void TileOrigins_SpreadTilesEvenlyWithinThePhoto(int length, int[] expected)
+  {
+    RestorePhotoEnhancement.TileOrigins(length).Should().Equal(expected);
   }
 
   [Fact]
@@ -223,14 +238,17 @@ public class RestorePhotoEnhancementTests : IDisposable
     return data.ToArray();
   }
 
-  private static byte[] GradientWithBandPng(int width, int height, int bandY, int bandHeight)
+  private static byte[] GradientWithBandPng(int width, int height)
   {
     var info = new SKImageInfo(width, height);
     using var surface = SKSurface.Create(info);
     var colors = new[] { SKColors.Black, new SKColor(70, 70, 70) };
-    using var gradient = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(width, 0), colors, SKShaderTileMode.Clamp);
+    var horizontal = width > height;
+    var end = horizontal ? new SKPoint(width, 0) : new SKPoint(0, height);
+    using var gradient = SKShader.CreateLinearGradient(new SKPoint(0, 0), end, colors, SKShaderTileMode.Clamp);
     surface.Canvas.DrawRect(0, 0, width, height, new SKPaint { Shader = gradient });
-    surface.Canvas.DrawRect(0, bandY, width, bandHeight, new SKPaint { Color = SKColors.White });
+    var band = horizontal ? SKRect.Create(0, height / 2 - 5, width, 10) : SKRect.Create(width / 2 - 5, 0, 10, height);
+    surface.Canvas.DrawRect(band, new SKPaint { Color = SKColors.White });
     using var image = surface.Snapshot();
     using var data = image.Encode(SKEncodedImageFormat.Png, 100);
     return data.ToArray();
