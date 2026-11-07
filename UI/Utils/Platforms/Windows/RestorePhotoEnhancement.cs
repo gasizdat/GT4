@@ -24,9 +24,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
     "Apache-2.0",
     208044816);
 
-  // Global/detection_models matches BOPBTL's own scale_256 preprocessing (short side 256,
-  // rounded to a multiple of 16 -- the UNet's depth-4 downsampling requires it) and its 0.4
-  // sigmoid threshold.
+  // BOPBTL's Global/detection.py scale_256 target size (short side 256, rounded to a multiple of
+  // 16 -- the UNet's depth-4 downsampling requires it) and its 0.4 sigmoid threshold.
   private const int DetectorInputSize = 256;
   private const float DamageThreshold = 0.4f;
 
@@ -79,12 +78,17 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition, IDis
   internal static SKBitmap DetectDamageMask(InferenceSession detector, SKBitmap bitmap)
   {
     var (dw, dh) = ShortSideTo(bitmap.Width, bitmap.Height, DetectorInputSize);
+    // Averages like upstream's Pillow BICUBIC, whose kernel widens when shrinking. Skia's cubic
+    // keeps a fixed kernel and aliases instead.
+    var info = new SKImageInfo(dw, dh);
+    var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+    using var resized = bitmap.Resize(info, sampling);
     var input = new DenseTensor<float>([1, 1, dh, dw]);
     for (var y = 0; y < dh; y++)
     {
       for (var x = 0; x < dw; x++)
       {
-        var pixel = bitmap.GetPixel(x * bitmap.Width / dw, y * bitmap.Height / dh);
+        var pixel = resized.GetPixel(x, y);
         var gray = (pixel.Red * 0.299f + pixel.Green * 0.587f + pixel.Blue * 0.114f) / 255f;
         input[0, 0, y, x] = gray * 2f - 1f;
       }
