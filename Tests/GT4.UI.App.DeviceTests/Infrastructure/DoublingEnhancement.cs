@@ -17,17 +17,23 @@ internal sealed class DoublingEnhancement : IPhotoEnhancement
 
   public Exception? Refusal { get; init; }
 
-  public Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
+  public bool RunsUntilCancelled { get; init; }
+
+  public async Task<SKBitmap> ApplyAsync(SKBitmap bitmap, CancellationToken token)
   {
     Received = new SKSizeI(bitmap.Width, bitmap.Height);
     if (Refusal is not null)
     {
       throw Refusal;
     }
+    if (RunsUntilCancelled)
+    {
+      await Task.Delay(Timeout.Infinite, token);
+    }
 
     var doubled = new SKBitmap(bitmap.Width * 2, bitmap.Height * 2);
     doubled.Erase(SKColors.Blue);
-    return Task.FromResult(doubled);
+    return doubled;
   }
 
   public void ReleaseModels() => ReleaseCount++;
