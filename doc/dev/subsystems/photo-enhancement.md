@@ -10,8 +10,9 @@ takes, not a line-by-line trace — read the class for that.
 
 An enhancer only ever sees decoded pixels: `ApplyAsync(SKBitmap)`. `PhotoEnhancementExtensions.EnhanceAsync`
 wraps it for the `PhotoInfo` the photo's `IDataConverter` hands out (decode, enhance, re-encode as JPEG,
-mark the caption). The decode applies the photo's EXIF orientation, so the copy is saved upright. `PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog`
-and `CreateOrUpdateNameDialog` call, turns the result back into a photo through that same converter.
+mark the caption). The decode applies the photo's EXIF orientation, so the copy is saved upright.
+`PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog` and
+`CreateOrUpdateNameDialog` call, turns the result back into a photo through that same converter.
 The copy is therefore a new, uncommitted photo — never the source's stored `Id`, which would show the
 source's cached image and collide with it on save. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
 `GedcomPhotoResidue` envelope, not an image.
@@ -89,8 +90,9 @@ Two models in sequence, over the whole photo, not per-face:
    Without the overlap, a repair crossing a tile edge showed a hard seam (#574): two tiles filled
    their halves independently, and damage touching a tile's edge was filled with invented colour.
    On a heavily cracked 1426x1928 photo, where every tile has damage, 20 tiles run instead of 12:
-   74 s instead of 52 s, both including LaMa's 8 s load, measured for #574 before #583's speedup. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
-   where the mask marks damage — every other pixel stays exactly the source pixel.
+   74 s instead of 52 s, both including LaMa's 8 s load, measured for #574 before #583's speedup.
+   `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only where the
+   mask marks damage — every other pixel stays exactly the source pixel.
 
 A photo whose mask marks nothing is refused ("no damage was found") rather than returned as a
 re-encoded duplicate of the source.
