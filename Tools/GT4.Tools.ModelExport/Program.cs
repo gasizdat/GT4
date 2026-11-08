@@ -122,9 +122,6 @@ sealed class ScratchDetectorUNet : Module
       var bridge = bridges[DownSampleStages - 1 - i];
       var upped = up_path[i].up.Export(graph, x);
 
-      // center_crop: match Global/detection_models/networks.py's UNetUpBlock.center_crop exactly
-      // -- crop the bridge (always >= upped in spatial size here, since `padding=True` keeps
-      // shapes aligned) to upped's shape, symmetric offset.
       var croppedBridge = CenterCrop(graph, bridge, upped, $"crop_{i}");
 
       var merged = graph.Concat($"merge_{i}", new ConcatInputOptions { In = [upped, croppedBridge], Axis = 1 });
@@ -149,10 +146,8 @@ sealed class ScratchDetectorUNet : Module
     return filt.unsqueeze(0).unsqueeze(0).repeat(channels, 1, 1, 1);
   }
 
-  // Both `padding=True` (every conv keeps its input's HxW) and the fixed depth-4, stride-2
-  // antialiased downsampling mean bridge and upped always already match spatially at this
-  // UNet's configuration -- but build a real dynamic-shape Slice, not an assumption, since a
-  // future caller could pass a size where that drifts by a pixel from odd-size rounding.
+  // The exported graph takes any height and width, so crop with a real Slice rather than assume the
+  // shapes match, as they do at the multiple-of-16 sizes the app sends.
   private static IOnnxGraphEdge CenterCrop(OnnxGraph graph, IOnnxGraphEdge bridge, IOnnxGraphEdge upped, string name)
   {
     var bridgeShape = graph.Shape($"{name}_bridge_shape", new ShapeInputOptions { Data = bridge });
