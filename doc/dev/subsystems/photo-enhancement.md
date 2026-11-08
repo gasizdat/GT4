@@ -10,7 +10,7 @@ takes, not a line-by-line trace — read the class for that.
 
 An enhancer only ever sees decoded pixels: `ApplyAsync(SKBitmap)`. `PhotoEnhancementExtensions.EnhanceAsync`
 wraps it for the `PhotoInfo` the photo's `IDataConverter` hands out (decode, enhance, re-encode as JPEG,
-mark the caption), and `PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog`
+mark the caption). The decode applies the photo's EXIF orientation, so the copy is saved upright. `PhotoEnhancer` (`UI/App/Dialogs`), the flow both `CreateOrUpdatePersonDialog`
 and `CreateOrUpdateNameDialog` call, turns the result back into a photo through that same converter.
 The copy is therefore a new, uncommitted photo — never the source's stored `Id`, which would show the
 source's cached image and collide with it on save. Never hand an enhancer `Data.Content`: a captioned photo's bytes are a
@@ -43,8 +43,8 @@ bitmap. Each tile is padded with 34 px of its real neighbours, the reach of the 
 3x3 convolutions, so the stitched result is identical to a single pass, with no seams (measured
 bit-exact against one). Denormalize each tile's output into the x4 bitmap, which has 16 times the
 source's pixels. A photo over 1 MP (1024x1024) is therefore refused with an alert before the model
-loads. Run time (about 37 s per input megapixel, measured on the CPU provider) and the x4 bitmap's
-memory both grow with area, so a 44 MP scan would need a 2.8 GB bitmap and about half an hour.
+loads. Run time and the x4 bitmap's memory both grow with area: a 44 MP scan would need a 2.8 GB
+bitmap, and on the CPU provider a 720x1000 photo took 9.9 s and a 790x1132 one 12.6 s (#583).
 
 The x4 bitmap is then halved, as Real-ESRGAN's own outscale option does, so the copy is x2 and its
 caption says so. That changes only what is stored and shown: the file is about 0.38 times x4's at
@@ -77,7 +77,10 @@ Two models in sequence, over the whole photo, not per-face:
    `Tools/GT4.Tools.ModelExport`) produces a binary damage mask: grayscale, resized so the short
    side is 256 (rounded to a multiple of 16), sigmoid + a 0.4 threshold, then resized back to the
    photo's full resolution with nearest-neighbor. The shrink averages (linear mipmaps, as
-   upstream's Pillow bicubic does), so dust specks too small to survive it go unflagged.
+   upstream's Pillow bicubic does), so dust specks too small to survive it go unflagged. The mask
+   is then dilated, three passes of a 3x3 kernel as upstream's `Global/test.py` does, at the
+   photo's full resolution, so the margin around a flagged line stays a few photo pixels at any
+   photo size.
 2. **Inpaint, composite** — LaMa (`lama-fp32.onnx`, `Carve/LaMa-ONNX`'s `lama_fp32.onnx`) fills
    damage at its fixed 512x512 input, tiled across the photo at native resolution (never resizing
    the whole photo through the model) with reflect-padding at the edges; tiles with no mask pixels
@@ -86,7 +89,7 @@ Two models in sequence, over the whole photo, not per-face:
    Without the overlap, a repair crossing a tile edge showed a hard seam (#574): two tiles filled
    their halves independently, and damage touching a tile's edge was filled with invented colour.
    On a heavily cracked 1426x1928 photo, where every tile has damage, 20 tiles run instead of 12:
-   74 s instead of 52 s, both including LaMa's 8 s load. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
+   74 s instead of 52 s, both including LaMa's 8 s load, measured for #574 before #583's speedup. `RestorePhotoEnhancement.CompositeMaskedPixels` then takes the inpainted value only
    where the mask marks damage — every other pixel stays exactly the source pixel.
 
 A photo whose mask marks nothing is refused ("no damage was found") rather than returned as a
