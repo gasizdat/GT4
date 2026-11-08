@@ -31,7 +31,6 @@ public partial class FamilyPage : ContentPage
   private Name? _FamilyName = null;
   private ProjectInfo? _LastProjectInfo;
   private PhotoInfo[] _Photos = [];
-  private AttachmentInfo[] _Attachments = [];
   private AttachmentItem[] _AttachmentItems = [];
 
   public FamilyPage(
@@ -135,7 +134,6 @@ public partial class FamilyPage : ContentPage
           _Persons.Clear();
           _Persons.AddRange(persons);
           _Photos = photos;
-          _Attachments = attachments;
           _AttachmentItems = [.. attachments.Select(attachment =>
             new AttachmentItem(attachment, _DataConverterResolver, _CancellationTokenProvider, _AlertService))];
           FilterView.ResetFilterData();
@@ -157,11 +155,9 @@ public partial class FamilyPage : ContentPage
 
   public bool ShowPhotos => _Photos.Length != 0;
 
-  public AttachmentInfo[] Attachments => _Attachments;
-
   public AttachmentItem[] AttachmentItems => _AttachmentItems;
 
-  public bool ShowAttachments => _Attachments.Length != 0;
+  public bool ShowAttachments => _AttachmentItems.Length != 0;
 
   public string RemoveFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _FamilyName?.Value ?? string.Empty);

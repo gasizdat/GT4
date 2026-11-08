@@ -494,7 +494,7 @@ public class FamilyPageTests
     Assert.Equal(mainPhotoBytes, await ReadBytesAsync(page.Photos[0].Source));
     Assert.Equal(additionalPhotoBytes, await ReadBytesAsync(page.Photos[1].Source));
     Assert.True(page.ShowAttachments);
-    Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
+    Assert.Equal("deed.pdf", page.AttachmentItems.Single().Attachment.FileName);
   }
 
   [Fact]
@@ -512,7 +512,7 @@ public class FamilyPageTests
       .ReturnsAsync(new FamilyFullInfo(familyName, null, [], [attachment]));
     var page = await CreatePageAsync(services);
     await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
-    var attachmentInfo = page.Attachments.Single();
+    var attachmentInfo = page.AttachmentItems.Single().Attachment;
 
     await using var window = await WindowHost.AttachAsync(page);
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(attachmentInfo));
@@ -559,7 +559,6 @@ public class FamilyPageTests
       TimeSpan.FromSeconds(1),
       "A document row resolved a thumbnail.");
 
-    Assert.Equal(page.Attachments, rows.Select(row => row.Attachment));
     Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await ReadBytesAsync(thumbnail!)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
@@ -568,7 +567,7 @@ public class FamilyPageTests
   public async Task Tapping_an_image_attachments_row_opens_its_full_size_image_in_the_photo_viewer()
   {
     var page = await ShowScanAndDeedAsync(new TestServices());
-    var scan = page.Attachments[0];
+    var scan = page.AttachmentItems[0].Attachment;
     await using var window = await WindowHost.AttachAsync(page);
 
     var rowTap = await Poll.UntilAsync(

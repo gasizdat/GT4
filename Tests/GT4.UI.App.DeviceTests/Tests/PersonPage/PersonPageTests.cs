@@ -475,7 +475,7 @@ public class PersonPageTests
 
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
 
-    var info = Assert.Single(page.Attachments);
+    var info = Assert.Single(page.AttachmentItems).Attachment;
     Assert.Equal("Acte de Bapteme", info.Title);
     Assert.Equal("Acte de Bapteme", info.DisplayName);
     Assert.Equal("actes/scan.pdf", info.FileName);
@@ -576,7 +576,7 @@ public class PersonPageTests
 
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
 
-    var info = Assert.Single(page.Attachments);
+    var info = Assert.Single(page.AttachmentItems).Attachment;
     Assert.Null(info.Title);
     Assert.Equal("deed.pdf", info.DisplayName);
     Assert.False(info.ShowFileName);
@@ -1171,7 +1171,7 @@ public class PersonPageTests
 
     var attachment = await page.ResolveAttachmentAsync(40);
 
-    Assert.Empty(page.Attachments);
+    Assert.Empty(page.AttachmentItems);
     Assert.NotNull(attachment);
     Assert.Equal("Another deed", attachment.Title);
   }
@@ -1237,16 +1237,16 @@ public class PersonPageTests
     services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
-    var attachment = page.Attachments.Single();
+    var row = page.AttachmentItems.Single();
 
     await using var window = await WindowHost.AttachAsync(page);
-    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(attachment));
+    var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(row.Attachment));
     var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
     await commandTask;
 
     await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
 
-    Assert.Same(attachment, page.Attachments.Single());
+    Assert.Same(row, page.AttachmentItems.Single());
   }
 
   [Fact]
@@ -1274,7 +1274,6 @@ public class PersonPageTests
       TimeSpan.FromSeconds(1),
       "A document row resolved a thumbnail.");
 
-    Assert.Equal(page.Attachments, rows.Select(row => row.Attachment));
     Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await PhotoBytes.ReadAsync(thumbnail!)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
@@ -1302,7 +1301,7 @@ public class PersonPageTests
 
     await MainThread.InvokeOnMainThreadAsync(() => dialog.CloseCommand.Execute(null));
 
-    Assert.Empty(page.Attachments);
+    Assert.Empty(page.AttachmentItems);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 

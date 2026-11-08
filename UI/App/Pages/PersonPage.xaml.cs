@@ -40,7 +40,6 @@ public partial class PersonPage : ContentPage
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private PhotoInfo[] _Photos = [];
-  private AttachmentInfo[] _Attachments = [];
   private AttachmentItem[] _AttachmentItems = [];
   private string _Biography = string.Empty;
   private bool _IsNarrow = true;
@@ -202,11 +201,9 @@ public partial class PersonPage : ContentPage
 
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
-  public AttachmentInfo[] Attachments => _Attachments;
-
   public AttachmentItem[] AttachmentItems => _AttachmentItems;
 
-  public bool ShowAttachments => _Attachments.Length != 0;
+  public bool ShowAttachments => _AttachmentItems.Length != 0;
 
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
@@ -319,7 +316,7 @@ public partial class PersonPage : ContentPage
   // A dangling link (the referenced attachment was since removed) is simply inert.
   protected async Task OpenAttachmentLinkAsync(int attachmentId)
   {
-    var attachment = _Attachments.FirstOrDefault(a => a.Data.Id == attachmentId);
+    var attachment = _AttachmentItems.FirstOrDefault(item => item.Attachment.Data.Id == attachmentId)?.Attachment;
     attachment ??= await TryResolveAttachmentAsync(attachmentId);
     if (attachment is not null)
     {
@@ -447,8 +444,7 @@ public partial class PersonPage : ContentPage
   {
     _PersonFullInfo = data.PersonFullInfo;
     _Photos = data.Photos;
-    _Attachments = data.Attachments;
-    _AttachmentItems = [.. _Attachments.Select(attachment =>
+    _AttachmentItems = [.. data.Attachments.Select(attachment =>
       new AttachmentItem(attachment, _DataConverterResolver, _CancellationTokenProvider, _AlertService))];
     _Biography = BiographySections.Combine(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
