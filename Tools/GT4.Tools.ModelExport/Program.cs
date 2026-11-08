@@ -145,8 +145,8 @@ sealed class ScratchDetectorUNet : Module
     return filt.unsqueeze(0).unsqueeze(0).repeat(channels, 1, 1, 1);
   }
 
-  // The exported graph takes any height and width, so crop with a real Slice rather than assume the
-  // shapes match, as they do at the multiple-of-16 sizes the app sends.
+  // Upstream's UNetUpBlock.center_crop, built as a Slice because height and width are symbolic in
+  // the exported graph. At the multiple-of-16 sizes the app sends, the shapes already match.
   private static IOnnxGraphEdge CenterCrop(OnnxGraph graph, IOnnxGraphEdge bridge, IOnnxGraphEdge upped, string name)
   {
     var bridgeShape = graph.Shape($"{name}_bridge_shape", new ShapeInputOptions { Data = bridge });
