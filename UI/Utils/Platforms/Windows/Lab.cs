@@ -1,8 +1,7 @@
 #if WINDOWS
 namespace GT4.UI.Utils.Platforms.Windows;
 
-// CIE L*a*b* <-> sRGB, D65 white point. ColorizePhotoEnhancement runs DDColor in Lab space: L comes
-// from the source photo, a/b come from the model.
+// CIE L*a*b* <-> sRGB, D65 white point.
 internal static class Lab
 {
   const float Xn = 0.95047f, Yn = 1.0f, Zn = 1.08883f;

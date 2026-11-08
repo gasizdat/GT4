@@ -102,16 +102,6 @@ sealed class ScratchDetectorUNet : Module
     }
   }
 
-  // detection_models/antialiasing.py's Downsample(filt_size=3): outer([1,2,1],[1,2,1])/16,
-  // repeated per channel, applied as a fixed (non-learned) depthwise convolution.
-  private static Tensor AntialiasingKernel(long channels)
-  {
-    var a = tensor(new float[] { 1f, 2f, 1f });
-    var filt = outer(a, a);
-    filt /= filt.sum();
-    return filt.unsqueeze(0).unsqueeze(0).repeat(channels, 1, 1, 1);
-  }
-
   public OnnxModel Export()
   {
     var onnxModel = OnnxModel.Create(new OnnxModelCreationOptions { Opset = 19, IrVersion = 9 });
@@ -131,10 +121,6 @@ sealed class ScratchDetectorUNet : Module
     {
       var bridge = bridges[DownSampleStages - 1 - i];
       var upped = up_path[i].up.Export(graph, x);
-
-      // center_crop: match Global/detection_models/networks.py's UNetUpBlock.center_crop exactly
-      // -- crop the bridge (always >= upped in spatial size here, since `padding=True` keeps
-      // shapes aligned) to upped's shape, symmetric offset.
       var croppedBridge = CenterCrop(graph, bridge, upped, $"crop_{i}");
 
       var merged = graph.Concat($"merge_{i}", new ConcatInputOptions { In = [upped, croppedBridge], Axis = 1 });
@@ -149,10 +135,18 @@ sealed class ScratchDetectorUNet : Module
     return onnxModel;
   }
 
-  // Both `padding=True` (every conv keeps its input's HxW) and the fixed depth-4, stride-2
-  // antialiased downsampling mean bridge and upped always already match spatially at this
-  // UNet's configuration -- but build a real dynamic-shape Slice, not an assumption, since a
-  // future caller could pass a size where that drifts by a pixel from odd-size rounding.
+  // detection_models/antialiasing.py's Downsample(filt_size=3): outer([1,2,1],[1,2,1])/16,
+  // repeated per channel, applied as a fixed (non-learned) depthwise convolution.
+  private static Tensor AntialiasingKernel(long channels)
+  {
+    var a = tensor(new float[] { 1f, 2f, 1f });
+    var filt = outer(a, a);
+    filt /= filt.sum();
+    return filt.unsqueeze(0).unsqueeze(0).repeat(channels, 1, 1, 1);
+  }
+
+  // Upstream's UNetUpBlock.center_crop, built as a Slice because height and width are symbolic in
+  // the exported graph. At the multiple-of-16 sizes the app sends, the shapes already match.
   private static IOnnxGraphEdge CenterCrop(OnnxGraph graph, IOnnxGraphEdge bridge, IOnnxGraphEdge upped, string name)
   {
     var bridgeShape = graph.Shape($"{name}_bridge_shape", new ShapeInputOptions { Data = bridge });

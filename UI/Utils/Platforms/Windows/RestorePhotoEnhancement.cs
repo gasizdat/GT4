@@ -35,12 +35,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   // with more photo beyond: a fill near that edge was made without seeing across it.
   private const int InpaintTileOverlap = 128;
 
-  // BOPBTL's own Global/test.py dilates the detector's raw per-pixel mask with a 3x3 kernel over
-  // this many iterations before inpainting -- an undilated mask is a 1-detector-pixel-wide line,
-  // and LaMa just interpolates that gap from its immediate neighbors, so the repair is there but
-  // invisible. Applied at full photo resolution (not BOPBTL's own low detector resolution) so the
-  // margin stays a few pixels regardless of photo size; dilating before the detector mask is
-  // upsampled would scale the margin by the photo/detector downsample ratio instead.
+  // BOPBTL's Global/test.py dilates the detector's mask with a 3x3 kernel this many times before
+  // inpainting. Done at full photo resolution, so the margin stays a few photo pixels at any size.
   private const int MaskDilationIterations = 3;
 
   private readonly IModelSessionProvider _SessionProvider;
@@ -121,6 +117,32 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return mask;
   }
 
+  // Spread evenly so the last tile ends at the photo's edge, not past it in reflect padding.
+  internal static IEnumerable<int> TileOrigins(int length)
+  {
+    var span = Math.Max(0, length - InpaintTileSize);
+    var stride = InpaintTileSize - InpaintTileOverlap;
+    var steps = (span + stride - 1) / stride;
+    var divisor = Math.Max(1, steps);
+    return Enumerable.Range(0, steps + 1).Select(i => i * span / divisor);
+  }
+
+  // Every unmasked pixel stays exactly the source pixel.
+  internal static void CompositeMaskedPixels(SKBitmap source, SKBitmap inpainted, SKBitmap mask, SKBitmap destination)
+  {
+    var pixels = source.Pixels;
+    var inpaintedPixels = BitmapColors.Of(inpainted);
+    var maskPixels = BitmapColors.Of(mask);
+    for (var i = 0; i < pixels.Length; i++)
+    {
+      if (maskPixels[i].Red != 0)
+      {
+        pixels[i] = inpaintedPixels[i];
+      }
+    }
+    destination.Pixels = pixels;
+  }
+
   private static bool[,] DilateMask(bool[,] mask, int width, int height)
   {
     for (var i = 0; i < MaskDilationIterations; i++)
@@ -181,16 +203,6 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var output = new SKBitmap(bitmap.Width, bitmap.Height);
     CompositeMaskedPixels(bitmap, inpaintedFull, mask, output);
     return output;
-  }
-
-  // Spread evenly so the last tile ends at the photo's edge, not past it in reflect padding.
-  internal static IEnumerable<int> TileOrigins(int length)
-  {
-    var span = Math.Max(0, length - InpaintTileSize);
-    var stride = InpaintTileSize - InpaintTileOverlap;
-    var steps = (span + stride - 1) / stride;
-    var divisor = Math.Max(1, steps);
-    return Enumerable.Range(0, steps + 1).Select(i => i * span / divisor);
   }
 
   private static bool TileHasDamage(SKBitmap mask, int tileX, int tileY) => HasDamageIn(
@@ -292,22 +304,6 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return distance / (float)InpaintTileOverlap;
   }
 
-  // Every unmasked pixel stays exactly the source pixel -- the invariant #506 calls for.
-  internal static void CompositeMaskedPixels(SKBitmap source, SKBitmap inpainted, SKBitmap mask, SKBitmap destination)
-  {
-    var pixels = source.Pixels;
-    var inpaintedPixels = BitmapColors.Of(inpainted);
-    var maskPixels = BitmapColors.Of(mask);
-    for (var i = 0; i < pixels.Length; i++)
-    {
-      if (maskPixels[i].Red != 0)
-      {
-        pixels[i] = inpaintedPixels[i];
-      }
-    }
-    destination.Pixels = pixels;
-  }
-
   private static (int Width, int Height) ShortSideTo(int width, int height, int shortSide)
   {
     var scale = (double)shortSide / Math.Min(width, height);
@@ -325,10 +321,6 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   // needs more than one reflection.
   private static int ReflectIndex(int i, int length)
   {
-    if (length == 1)
-    {
-      return 0;
-    }
     var period = 2 * length;
     var m = ((i % period) + period) % period;
     return m < length ? m : period - 1 - m;
