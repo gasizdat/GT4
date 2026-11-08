@@ -207,3 +207,12 @@ heavy third-party dependencies that have no reason to be restored on every CI ru
   needs `torch`+`onnxruntime` locally — there's no CI path for it, same reasoning as the tool
   itself. The scratch detector's own conversion lands at ~2-4e-5 max absolute difference (float32
   noise floor) at every size that's expected to work.
+
+## Test fixtures
+
+The enhancer tests run real ONNX Runtime inference on tiny stand-in models in
+`Tests/GT4.UI.Utils.Tests/Fixtures`, one per model plus `tiny-inpainter-mean.onnx` for Restore's
+tile blending. Each `.onnx` has its generator beside it; what each stands in for is in the script's
+header. To change one, edit its script, run it once `pip install -r requirements.txt` is done, and
+commit the script and the regenerated `.onnx` together. Nothing regenerates them during a build:
+the test project embeds the committed binaries, and CI doesn't check them against their scripts.
