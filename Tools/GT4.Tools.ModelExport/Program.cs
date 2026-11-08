@@ -102,16 +102,6 @@ sealed class ScratchDetectorUNet : Module
     }
   }
 
-  // detection_models/antialiasing.py's Downsample(filt_size=3): outer([1,2,1],[1,2,1])/16,
-  // repeated per channel, applied as a fixed (non-learned) depthwise convolution.
-  private static Tensor AntialiasingKernel(long channels)
-  {
-    var a = tensor(new float[] { 1f, 2f, 1f });
-    var filt = outer(a, a);
-    filt /= filt.sum();
-    return filt.unsqueeze(0).unsqueeze(0).repeat(channels, 1, 1, 1);
-  }
-
   public OnnxModel Export()
   {
     var onnxModel = OnnxModel.Create(new OnnxModelCreationOptions { Opset = 19, IrVersion = 9 });
@@ -147,6 +137,16 @@ sealed class ScratchDetectorUNet : Module
     graph.AddOutput("output", OnnxTensorType.Create<float>([1, 1, "oh", "ow"]));
 
     return onnxModel;
+  }
+
+  // detection_models/antialiasing.py's Downsample(filt_size=3): outer([1,2,1],[1,2,1])/16,
+  // repeated per channel, applied as a fixed (non-learned) depthwise convolution.
+  private static Tensor AntialiasingKernel(long channels)
+  {
+    var a = tensor(new float[] { 1f, 2f, 1f });
+    var filt = outer(a, a);
+    filt /= filt.sum();
+    return filt.unsqueeze(0).unsqueeze(0).repeat(channels, 1, 1, 1);
   }
 
   // Both `padding=True` (every conv keeps its input's HxW) and the fixed depth-4, stride-2
