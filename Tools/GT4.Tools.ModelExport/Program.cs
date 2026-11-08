@@ -121,7 +121,6 @@ sealed class ScratchDetectorUNet : Module
     {
       var bridge = bridges[DownSampleStages - 1 - i];
       var upped = up_path[i].up.Export(graph, x);
-
       var croppedBridge = CenterCrop(graph, bridge, upped, $"crop_{i}");
 
       var merged = graph.Concat($"merge_{i}", new ConcatInputOptions { In = [upped, croppedBridge], Axis = 1 });
