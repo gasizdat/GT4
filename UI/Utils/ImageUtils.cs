@@ -37,13 +37,15 @@ public static class ImageUtils
   public static ImageSource TransparentImageStub =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(TransparentPngData), token));
 
+  public static ImageSource UnreadableImageStub => ImageFromRawResource("unreadable_image.png", ThumbnailSize);
+
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
-  /// re-encodes it as PNG. Lets callers keep a small thumbnail instead of a full-resolution bitmap when
-  /// the image is only ever shown tiny (a family-tree node decodes its source to a ~60px circle, so the
-  /// full-res decode is hundreds of times larger than needed).
+  /// re-encodes it as PNG, or returns null when the bytes don't decode. Lets callers keep a small thumbnail
+  /// instead of a full-resolution bitmap when the image is only ever shown tiny (a family-tree node decodes
+  /// its source to a ~60px circle, so the full-res decode is hundreds of times larger than needed).
   /// </summary>
-  public static byte[] DownsizedPng(byte[] data, int maxSize)
+  public static byte[]? DownsizedPng(byte[] data, int maxSize)
   {
     using var input = new MemoryStream(data);
     return DownsizedPngStream(input, maxSize);
@@ -102,7 +104,8 @@ public static class ImageUtils
 
           if (maxSize.HasValue)
           {
-            bytes = DownsizedPngStream(originalStream, maxSize.Value);
+            bytes = DownsizedPngStream(originalStream, maxSize.Value)
+              ?? throw new InvalidOperationException($"Could not decode the {resourceName} resource.");
           }
           else
           {
@@ -191,12 +194,12 @@ public static class ImageUtils
   // decode off the UI thread creates WinRT objects there. That contends the process-wide ComWrappers
   // lock with the UI thread's own platform-view creation, and because the UI thread is STA its
   // contended wait pumps COM messages -- re-entering XAML mid-layout, which is fatal (issue #370).
-  private static byte[] DownsizedPngStream(Stream input, float maxSize)
+  private static byte[]? DownsizedPngStream(Stream input, float maxSize)
   {
     using var original = DecodeUpright(input);
     if (original is null)
     {
-      throw new InvalidOperationException("Could not decode the image.");
+      return null;
     }
 
     var longestSide = Math.Max(original.Width, original.Height);

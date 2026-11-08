@@ -494,7 +494,7 @@ public class FamilyPageTests
     Assert.Equal(mainPhotoBytes, await ReadBytesAsync(page.Photos[0].Source));
     Assert.Equal(additionalPhotoBytes, await ReadBytesAsync(page.Photos[1].Source));
     Assert.True(page.ShowAttachments);
-    Assert.Equal("deed.pdf", page.Attachments.Single().FileName);
+    Assert.Equal("deed.pdf", page.AttachmentItems.Single().Attachment.FileName);
   }
 
   [Fact]
@@ -512,7 +512,7 @@ public class FamilyPageTests
       .ReturnsAsync(new FamilyFullInfo(familyName, null, [], [attachment]));
     var page = await CreatePageAsync(services);
     await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
-    var attachmentInfo = page.Attachments.Single();
+    var attachmentInfo = page.AttachmentItems.Single().Attachment;
 
     await using var window = await WindowHost.AttachAsync(page);
     var commandTask = await MainThreadTask.StartAsync(() => page.InvokePageCommandAsync(attachmentInfo));
@@ -520,6 +520,65 @@ public class FamilyPageTests
     await commandTask;
 
     Assert.NotNull(dialog);
+    await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
+  }
+
+  // The scan is wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
+  private static async Task<TestableFamilyPage> ShowScanAndDeedAsync(TestServices services)
+  {
+    var familyName = N(5, "Ivanov", NameType.FamilyName);
+    var scan = new Data(
+      3, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.FamilyAttachment);
+    var deed = new Data(
+      4, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", DataCategory.FamilyAttachment);
+    services.PersonManager
+      .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
+      .ReturnsAsync([]);
+    services.FamilyManager
+      .Setup(f => f.GetFamilyFullInfoAsync(familyName, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(new FamilyFullInfo(familyName, null, [], [scan, deed]));
+    var page = await CreatePageAsync(services);
+    await page.ReloadPersonsAsync(() => page.FamilyName = familyName);
+    return page;
+  }
+
+  [Fact]
+  public async Task An_image_attachment_row_gets_a_downsized_thumbnail_and_a_document_row_none()
+  {
+    var services = new TestServices();
+    var page = await ShowScanAndDeedAsync(services);
+    var rows = page.AttachmentItems;
+
+    var thumbnail = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => rows[0].Thumbnail),
+      source => source is not null,
+      timeoutMessage: "The scan's thumbnail never resolved.");
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => rows[1].HasThumbnail),
+      shown => shown,
+      TimeSpan.FromSeconds(1),
+      "A document row resolved a thumbnail.");
+
+    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await ReadBytesAsync(thumbnail!)));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Tapping_an_image_attachments_row_opens_its_full_size_image_in_the_photo_viewer()
+  {
+    var page = await ShowScanAndDeedAsync(new TestServices());
+    var scan = page.AttachmentItems[0].Attachment;
+    await using var window = await WindowHost.AttachAsync(page);
+
+    var rowTap = await Poll.UntilAsync(
+      () => MainThread.InvokeOnMainThreadAsync(
+        () => MediaPreviews.Taps(page).Select(found => found.Tap).FirstOrDefault(tap => ReferenceEquals(tap.CommandParameter, scan))),
+      tap => tap is not null,
+      timeoutMessage: "The scan's row never materialized.");
+    await MainThread.InvokeOnMainThreadAsync(() => rowTap!.Command!.Execute(scan));
+    var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
+
+    Assert.Same(scan.Image!.Source, Assert.Single(dialog.Photos));
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 

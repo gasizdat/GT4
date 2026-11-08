@@ -36,8 +36,14 @@ public sealed class ImageDataConverter : IDataConverter
       return Task.FromResult<object?>(null);
     }
 
-    ImageSource imageSource;
-    if (data.Id == ElementId.NonCommittedId)
+    ImageSource? imageSource;
+    if (data is ImageDataWithMaxSize { Id: ElementId.NonCommittedId } uncommitted)
+    {
+      // Not cached: without an id there is no key that stays this image's own.
+      var thumbnail = ImageUtils.DownsizedPng(data.Content, uncommitted.MaxSize);
+      imageSource = thumbnail is null ? null : ImageSource.FromStream(() => new MemoryStream(thumbnail));
+    }
+    else if (data.Id == ElementId.NonCommittedId)
     {
       imageSource = ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(data.Content), token));
     }
@@ -52,6 +58,7 @@ public sealed class ImageDataConverter : IDataConverter
       imageSource = _ImageCache.GetImage(key, () => data.Content);
     }
 
-    return Task.FromResult<object?>(new PhotoInfo(imageSource, null));
+    // Only a thumbnail decodes here; unlike a file that isn't an image, one that won't decode still gets a picture.
+    return Task.FromResult<object?>(new PhotoInfo(imageSource ?? ImageUtils.UnreadableImageStub, null));
   }
 }

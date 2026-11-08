@@ -3,5 +3,5 @@
 public interface IImageCache
 {
   void Clear();
-  ImageSource GetImage(string key, Func<byte[]> dataProvider);
+  ImageSource? GetImage(string key, Func<byte[]?> dataProvider);
 }

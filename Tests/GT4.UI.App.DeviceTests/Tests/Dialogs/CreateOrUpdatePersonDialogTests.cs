@@ -7,6 +7,7 @@ using GT4.UI.Components;
 using GT4.UI.Dialogs;
 using GT4.UI.Items;
 using GT4.UI.Resources;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -412,8 +413,8 @@ public class CreateOrUpdatePersonDialogTests
     var services = new TestServices();
     var person = CreateSamplePerson() with
     {
-      MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto),
-      AdditionalPhotos = [new Data(11, Png(5, 2), "image/png", DataCategory.PersonPhoto)]
+      MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto),
+      AdditionalPhotos = [new Data(11, TestImages.Png(5, 2), "image/png", DataCategory.PersonPhoto)]
     };
     var unpicked = new DoublingEnhancement();
     var picked = new DoublingEnhancement { DisplayName = "Other" };
@@ -431,7 +432,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task Cancelling_the_enhance_sheet_adds_no_photo()
   {
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -453,7 +454,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task Cancelling_a_running_enhancement_closes_its_progress_and_leaves_the_dialog_unmodified()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement { RunsUntilCancelled = true };
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -478,7 +479,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task Enhancement_models_stay_loaded_until_the_dialog_is_saved()
   {
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -501,14 +502,6 @@ public class CreateOrUpdatePersonDialogTests
 
     Assert.Null(await dialog.Info);
     Assert.Equal(1, enhancement.ReleaseCount);
-  }
-
-  private static byte[] Png(int width, int height)
-  {
-    using var bitmap = new SKBitmap(width, height);
-    bitmap.Erase(SKColors.Red);
-    using var data = bitmap.Encode(SKEncodedImageFormat.Png, 100);
-    return data.ToArray();
   }
 
   // Tagged with EXIF orientation 6, so upright it is height x width. Skia's encoder writes no EXIF, so the
@@ -567,7 +560,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task EnhanceCommand_on_a_saved_photo_adds_its_copy_as_a_new_photo_right_after_it()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -600,7 +593,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task EnhanceCommand_on_a_captioned_photo_enhances_its_image_and_marks_the_caption()
   {
     var services = new TestServices();
-    var content = GedcomPhotoResidue.EncodePhotoTitle(Png(4, 3), "Grandma");
+    var content = GedcomPhotoResidue.EncodePhotoTitle(TestImages.Png(4, 3), "Grandma");
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged) };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
@@ -620,7 +613,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task EnhanceCommand_on_an_enhanced_copy_marks_both_steps_in_order()
   {
-    var content = GedcomPhotoResidue.EncodePhotoTitle(Png(4, 3), "Grandma");
+    var content = GedcomPhotoResidue.EncodePhotoTitle(TestImages.Png(4, 3), "Grandma");
     var person = CreateSamplePerson() with { MainPhoto = new Data(10, content, "image/png", DataCategory.PersonMainPhotoTagged) };
     var first = new DoublingEnhancement { DisplayName = "First", CaptionMark = "AI: first" };
     var second = new DoublingEnhancement { DisplayName = "Second", CaptionMark = "AI: second" };
@@ -640,7 +633,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task EnhanceCommand_refused_by_the_enhancement_adds_no_copy_and_shows_why()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var refusal = new InvalidOperationException(UIStrings.ErrorPhotoHasNoDamage);
     var enhancement = new DoublingEnhancement { Refusal = refusal };
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
@@ -685,7 +678,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task EnhanceCommand_carries_over_a_caption_edited_but_not_yet_saved()
   {
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(new TestServices(), person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -724,7 +717,7 @@ public class CreateOrUpdatePersonDialogTests
       .Setup(a => a.ShowConfirmationAsync(It.IsAny<string>()))
       .Callback<string>(text => prompt = text)
       .ReturnsAsync(false);
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement { Models = [TestModel] };
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -758,7 +751,7 @@ public class CreateOrUpdatePersonDialogTests
       .Setup(d => d.EnsureModelAsync(TestModel, It.IsAny<CancellationToken>()))
       .Callback(() => enhancedBeforeDownload = enhancement.Received is not null)
       .Returns(Task.CompletedTask);
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
 
@@ -774,7 +767,7 @@ public class CreateOrUpdatePersonDialogTests
   {
     var services = new TestServices();
     services.ModelDownloader.Setup(d => d.IsDownloaded(TestModel)).Returns(true);
-    var person = CreateSamplePerson() with { MainPhoto = new Data(10, Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
+    var person = CreateSamplePerson() with { MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto) };
     var enhancement = new DoublingEnhancement { Models = [TestModel] };
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);
@@ -818,7 +811,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task EnhanceAttachmentCommand_adds_its_copy_as_an_attachment_right_after_it_and_no_photo()
   {
     var services = new TestServices();
-    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
+    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
     var titled = await GedcomPhotoResidue.WithTitleAsync(image, "Deed", CancellationToken.None);
     var person = CreateSamplePerson() with { Attachments = [titled with { Id = 20 }, Attachment(21)] };
     var enhancement = new DoublingEnhancement();
@@ -876,7 +869,7 @@ public class CreateOrUpdatePersonDialogTests
     {
       EnhancementAnswer = enhancement.DisplayName
     };
-    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
+    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
     var titled = await GedcomPhotoResidue.WithTitleAsync(image, "Deed", CancellationToken.None);
     var person = CreateSamplePerson() with { Attachments = [titled with { Id = 20 }] };
     var (dialog, _) = await CreateEnhancingDialogAsync(services, person, enhancer);
@@ -889,6 +882,183 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Equal("Deed (Doubled)", copy.Title);
     Assert.NotNull(copy.Image);
     Assert.Null(copy.Image.Caption);
+  }
+
+  // Wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
+  private static Data ScanAttachment(int id) =>
+    new(id, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.PersonAttachment);
+
+  private static async Task<Size?> ThumbnailSizeAsync(PersonDataItem item)
+  {
+    var thumbnail = await WaitForAsync(() => item.Thumbnail, source => source is not null, "The thumbnail never resolved.");
+    var bytes = await PhotoBytes.ReadAsync(thumbnail!);
+    return ImageUtils.PixelSize(bytes);
+  }
+
+  private static Task ConfirmNoViewerAsync(Page dialog, string failureMessage) =>
+    Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Navigation.ModalStack.OfType<PhotoViewerDialog>().Any()),
+      open => open,
+      TimeSpan.FromSeconds(1),
+      failureMessage);
+
+  [Fact]
+  public async Task An_image_attachment_row_shows_a_downsized_thumbnail_and_a_document_row_none()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), Attachment(21)] };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
+    var scan = dialog.Attachments.First();
+    var deed = dialog.Attachments.Last();
+
+    Assert.Equal(new Size(100, 67), await ThumbnailSizeAsync(scan));
+    await WaitForAsync(() => deed.Content, content => content is not null, "The document never loaded.");
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => deed.HasThumbnail),
+      shown => shown,
+      TimeSpan.FromSeconds(1),
+      "A document row resolved a thumbnail.");
+    var deedPicture = previews.Single(preview => MediaPreviews.Item(preview.Tap) == deed).Owner;
+    Assert.False(await MainThread.InvokeOnMainThreadAsync(() => deedPicture.IsVisible));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task An_image_attachment_that_wont_decode_shows_the_unreadable_stub_without_an_alert()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Attachments = [Attachment(20, "scan.tiff", "image/tiff"), Attachment(21)] };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
+    var scan = dialog.Attachments.First();
+    var deed = dialog.Attachments.Last();
+
+    var thumbnail = await WaitForAsync(() => scan.Thumbnail, source => source is not null, "The unreadable scan got no thumbnail.");
+    Assert.Same(ImageUtils.UnreadableImageStub, thumbnail);
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => deed.HasThumbnail),
+      shown => shown,
+      TimeSpan.FromSeconds(1),
+      "A document row got the unreadable stub.");
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Tapping_an_attachments_thumbnail_opens_its_full_size_image_alone_in_the_viewer()
+  {
+    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), ScanAttachment(22)] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var scan = dialog.Attachments.Last();
+    var image = await WaitForAsync(() => scan.Image, source => source is not null, "The attachment never loaded.");
+
+    await MediaPreviews.TapAsync(dialog, dialog.Attachments, scan);
+    var viewer = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(dialog);
+
+    var shown = Assert.Single(viewer.Photos);
+    Assert.Same(image, shown);
+    Assert.Equal(new Size(300, 200), ImageUtils.PixelSize(await PhotoBytes.ReadAsync(shown)));
+    await MainThread.InvokeOnMainThreadAsync(() => viewer.CloseCommand.Execute(null));
+  }
+
+  [Fact]
+  public async Task Only_an_attachments_picture_opens_the_viewer_and_a_documents_opens_nothing()
+  {
+    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), Attachment(21)] };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
+    var deed = dialog.Attachments.Last();
+    await WaitForAsync(() => deed.Content, content => content is not null, "The document never loaded.");
+
+    await MediaPreviews.TapAsync(dialog, dialog.Attachments, deed);
+    await ConfirmNoViewerAsync(dialog, "A document's row opened the viewer.");
+
+    Assert.All(previews, preview => Assert.IsType<Image>(preview.Owner));
+    var rowTaps = await MainThread.InvokeOnMainThreadAsync(
+      () => previews.SelectMany(preview => ((View)preview.Owner.Parent).GestureRecognizers.OfType<TapGestureRecognizer>()).ToArray());
+    Assert.Empty(rowTaps);
+  }
+
+  [Fact]
+  public async Task An_enhanced_attachment_copy_shows_a_downsized_thumbnail()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20)] };
+    var enhancement = new DoublingEnhancement();
+    var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    enhancer.EnhancementAnswer = enhancement.DisplayName;
+
+    await EnhanceAdorners.TapAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand", dialog.Attachments.Single());
+    var attachments = await WaitForAsync(
+      () => dialog.Attachments.ToArray(), items => items.Length == 2, "The enhanced attachment was never added.");
+
+    Assert.Equal(ElementId.NonCommittedId, attachments[1].Info.Id);
+    Assert.Equal(new Size(100, 67), await ThumbnailSizeAsync(attachments[1]));
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task Tapping_a_photo_opens_only_that_photo_in_the_viewer()
+  {
+    var person = CreateSamplePerson() with
+    {
+      MainPhoto = new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.PersonMainPhoto),
+      AdditionalPhotos = [new Data(11, TestImages.Png(5, 2), "image/png", DataCategory.PersonPhoto)]
+    };
+    var dialog = await CreateDialogAsync(new TestServices(), person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var photo = dialog.Photos.Last();
+    var image = await WaitForAsync(() => photo.Image, source => source is not null, "The photo never loaded.");
+
+    await MediaPreviews.TapAsync(dialog, dialog.Photos, photo);
+    var viewer = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(dialog);
+
+    Assert.Same(image, Assert.Single(viewer.Photos));
+    await MainThread.InvokeOnMainThreadAsync(() => viewer.CloseCommand.Execute(null));
+  }
+
+  // A tap reaches only the topmost element under it and that element's ancestors. The picture is the
+  // adorners' sibling, drawn beneath them, so it can only see a tap the adorners leave uncovered.
+  [Fact]
+  public async Task A_photos_adorners_run_their_own_command_and_open_no_viewer()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), CreateSamplePerson());
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var previews = await MediaPreviews.WaitAsync(dialog, dialog.Photos);
+    var first = dialog.Photos.First();
+    var picture = previews.Single(preview => MediaPreviews.Item(preview.Tap) == first).Owner;
+
+    var (pictureIndex, adornerIndices, adornerTaps) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var grid = (Grid)picture.Parent;
+      var adorners = grid.Children.OfType<Button>().ToArray();
+      int[] indices = [.. adorners.Select(adorner => grid.Children.IndexOf(adorner))];
+      var ancestors = adorners.SelectMany(adorner => Ancestors(adorner, dialog));
+      TapGestureRecognizer[] taps = [.. ancestors.SelectMany(view => view.GestureRecognizers.OfType<TapGestureRecognizer>())];
+      return (grid.Children.IndexOf(picture), indices, taps);
+    });
+    await EnhanceAdorners.TapAsync(dialog, dialog.Photos, "MovePhotoToRightCommand", first);
+    await WaitForAsync(() => dialog.Photos.ElementAt(1), photo => photo == first, "The move adorner never ran.");
+    await ConfirmNoViewerAsync(dialog, "A photo's adorner opened the viewer.");
+
+    Assert.All(adornerIndices, index => Assert.True(index > pictureIndex));
+    Assert.Empty(adornerTaps);
+  }
+
+  private static IEnumerable<View> Ancestors(Element element, Page root)
+  {
+    for (var current = element; current is not null && current != root; current = current.Parent)
+    {
+      if (current is View view)
+      {
+        yield return view;
+      }
+    }
   }
 
   [Fact]

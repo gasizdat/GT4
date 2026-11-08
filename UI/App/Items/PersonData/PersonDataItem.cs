@@ -4,15 +4,11 @@ using GT4.Core.Project.Extensions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Utils.Converters;
-using System.ComponentModel;
 
 namespace GT4.UI.Items;
 
-public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
+public class PersonDataItem : DataItemBase
 {
-  private readonly IDataConverter _DataConverter;
-  private readonly ICancellationTokenProvider _CancellationTokenProvider;
-  private readonly IAlertService _AlertService;
   private object? _Content = null;
   private bool _IsReady = false;
   private bool _ContentModified = false;
@@ -21,11 +17,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public PersonDataItem(Data data, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
     IAlertService alertService)
-    : base(data, string.Empty)
+    : base(data, dataConverter, cancellationTokenProvider, alertService)
   {
-    _DataConverter = dataConverter;
-    _CancellationTokenProvider = cancellationTokenProvider;
-    _AlertService = alertService;
   }
 
   public PersonDataItem(DataCategory dataCategory, IDataConverter dataConverter, ICancellationTokenProvider cancellationTokenProvider,
@@ -37,9 +30,6 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
                Category: dataCategory),
         dataConverter, cancellationTokenProvider, alertService)
   {
-    _DataConverter = dataConverter;
-    _CancellationTokenProvider = cancellationTokenProvider;
-    _AlertService = alertService;
   }
 
   public object? Content
@@ -52,8 +42,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
         async Task UpdateContentAsync()
         {
-          using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-          var content = await _DataConverter.ToObjectAsync(Info, token);
+          using var token = CancellationTokenProvider.CreateShortOperationCancellationToken();
+          var content = await DataConverter.ToObjectAsync(Info, token);
 
           MainThread.BeginInvokeOnMainThread(() =>
           {
@@ -62,7 +52,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
           });
         }
 
-        SafeTask.Run(UpdateContentAsync, _AlertService);
+        SafeTask.Run(UpdateContentAsync, AlertService);
       }
       return _Content;
     }
@@ -78,6 +68,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     }
   }
 
+  public ImageSource? Image => ImageOf(Content);
+
   // Falls back to the decoded PhotoInfo.Caption/AttachmentInfo.Title once Content loads; the override
   // wins once set so a fast typist never loses input to a slower background decode.
   public string? Caption
@@ -87,7 +79,7 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     {
       _CaptionOverride = value;
       _CaptionModified = true;
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Caption)));
+      OnPropertyChanged(nameof(Caption));
     }
   }
 
@@ -95,11 +87,11 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
 
   public async Task<Data?> ToDataAsync()
   {
-    // Bypasses _DataConverter entirely: it operates on Info's raw bytes, not the lazily-decoded Content,
+    // Bypasses DataConverter entirely: it operates on Info's raw bytes, not the lazily-decoded Content,
     // so it never races the background load and never re-encodes the image.
     if (_CaptionModified)
     {
-      using var captionToken = _CancellationTokenProvider.CreateShortOperationCancellationToken();
+      using var captionToken = CancellationTokenProvider.CreateShortOperationCancellationToken();
       return await GedcomPhotoResidue.WithTitleAsync(Info, _CaptionOverride, captionToken);
     }
 
@@ -107,8 +99,8 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     if (!_ContentModified)
       return Info;
 
-    using var token = _CancellationTokenProvider.CreateShortOperationCancellationToken();
-    var ret = await _DataConverter.FromObjectAsync(_Content, token);
+    using var token = CancellationTokenProvider.CreateShortOperationCancellationToken();
+    var ret = await DataConverter.FromObjectAsync(_Content, token);
     if (ret is not null)
     {
       // A tagged Category coming back is the converter's signal that it re-encoded a residue envelope, and
@@ -133,11 +125,10 @@ public class PersonDataItem : CollectionItemBase<Data>, INotifyPropertyChanged
     return [.. data.OfType<Data>()];
   }
 
-  public event PropertyChangedEventHandler? PropertyChanged;
-
   private void OnContentChanged()
   {
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Content)));
-    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Caption)));
+    OnPropertyChanged(nameof(Content));
+    OnPropertyChanged(nameof(Image));
+    OnPropertyChanged(nameof(Caption));
   }
 }

@@ -5,6 +5,7 @@ using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using GT4.UI.Components;
 using GT4.UI.Dialogs;
+using GT4.UI.Utils;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using Moq;
@@ -294,6 +295,56 @@ public class CreateOrUpdateNameDialogTests
     Assert.Equal(new[] { DataCategory.FamilyAttachment }, categories);
     Assert.Equal("image/jpeg", info.Attachments[1].MimeType);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
+  public async Task A_family_image_attachments_downsized_thumbnail_opens_its_full_size_image_and_a_documents_nothing()
+  {
+    var services = new TestServices();
+    var scan = new Data(
+      10, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "deed.png"), "image/png", DataCategory.FamilyAttachment);
+    var dialog = await CreateDialogAsync(services, [scan, Attachment(11)]);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
+    var image = dialog.Attachments.First();
+    var document = dialog.Attachments.Last();
+    var thumbnail = await WaitForAsync(() => image.Thumbnail, source => source is not null, "The thumbnail never resolved.");
+    await WaitForAsync(() => document.Content, content => content is not null, "The document never loaded.");
+
+    await MediaPreviews.TapAsync(dialog, dialog.Attachments, document);
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Navigation.ModalStack.OfType<PhotoViewerDialog>().Any()),
+      open => open,
+      TimeSpan.FromSeconds(1),
+      "A document's row opened the viewer.");
+    await MediaPreviews.TapAsync(dialog, dialog.Attachments, image);
+    var viewer = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(dialog);
+
+    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await PhotoBytes.ReadAsync(thumbnail!)));
+    Assert.False(await MainThread.InvokeOnMainThreadAsync(() => document.HasThumbnail));
+    Assert.Same(image.Image, Assert.Single(viewer.Photos));
+    var rowTaps = await MainThread.InvokeOnMainThreadAsync(
+      () => previews.SelectMany(preview => ((View)preview.Owner.Parent).GestureRecognizers.OfType<TapGestureRecognizer>()).ToArray());
+    Assert.Empty(rowTaps);
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+    await MainThread.InvokeOnMainThreadAsync(() => viewer.CloseCommand.Execute(null));
+  }
+
+  [Fact]
+  public async Task Tapping_a_family_photo_opens_only_that_photo_in_the_viewer()
+  {
+    var dialog = await CreateDialogAsync(new TestServices(), [
+      new Data(10, TestImages.Png(4, 3), "image/png", DataCategory.FamilyMainPhoto),
+      new Data(11, TestImages.Png(5, 2), "image/png", DataCategory.FamilyPhoto)]);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    var photo = dialog.Photos.Last();
+    var image = await WaitForAsync(() => photo.Image, source => source is not null, "The photo never loaded.");
+
+    await MediaPreviews.TapAsync(dialog, dialog.Photos, photo);
+    var viewer = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(dialog);
+
+    Assert.Same(image, Assert.Single(viewer.Photos));
+    await MainThread.InvokeOnMainThreadAsync(() => viewer.CloseCommand.Execute(null));
   }
 
   [Fact]
