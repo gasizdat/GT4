@@ -926,6 +926,27 @@ public class CreateOrUpdatePersonDialogTests
   }
 
   [Fact]
+  public async Task An_image_attachment_that_wont_decode_shows_the_unreadable_stub_without_an_alert()
+  {
+    var services = new TestServices();
+    var person = CreateSamplePerson() with { Attachments = [Attachment(20, "scan.tiff", "image/tiff"), Attachment(21)] };
+    var dialog = await CreateDialogAsync(services, person);
+    await using var window = await WindowHost.AttachAsync(dialog);
+    await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
+    var scan = dialog.Attachments.First();
+    var deed = dialog.Attachments.Last();
+
+    var thumbnail = await WaitForAsync(() => scan.Thumbnail, source => source is not null, "The unreadable scan got no thumbnail.");
+    Assert.Same(ImageUtils.UnreadableImageStub, thumbnail);
+    await Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => deed.HasThumbnail),
+      shown => shown,
+      TimeSpan.FromSeconds(1),
+      "A document row got the unreadable stub.");
+    services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
+  }
+
+  [Fact]
   public async Task Tapping_an_attachments_thumbnail_opens_its_full_size_image_alone_in_the_viewer()
   {
     var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), ScanAttachment(22)] };

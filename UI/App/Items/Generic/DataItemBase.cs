@@ -24,7 +24,7 @@ public abstract class DataItemBase : CollectionItemBase<Data>, INotifyPropertyCh
 
   public event PropertyChangedEventHandler? PropertyChanged;
 
-  /// <summary>Null for a file that does not render as an image: a document gets no picture, not a stub.</summary>
+  /// <summary>Null only for a file that isn't an image: a document gets no picture at all.</summary>
   public ImageSource? Thumbnail
   {
     get

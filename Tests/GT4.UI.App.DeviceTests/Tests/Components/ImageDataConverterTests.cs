@@ -41,4 +41,30 @@ public class ImageDataConverterTests
 
     Assert.Equal(new Size(300, 200), size);
   }
+
+  [Theory]
+  [InlineData(ElementId.NonCommittedId)]
+  [InlineData(20)]
+  public async Task An_image_that_wont_decode_asked_for_at_a_max_size_comes_back_as_the_unreadable_stub(int id)
+  {
+    var unreadable = new Data(id, [1, 2, 3], "image/tiff", DataCategory.PersonAttachment);
+    var thumbnail = new ImageDataWithMaxSize(unreadable, ImageUtils.ThumbnailSize);
+
+    var converted = await CreateConverter().ToObjectAsync(thumbnail, CancellationToken.None);
+
+    var photo = Assert.IsType<PhotoInfo>(converted);
+    Assert.Same(ImageUtils.UnreadableImageStub, photo.Source);
+  }
+
+  // The platform's decoder may read what Skia can't, so the full-size image is never swapped for the stub.
+  [Fact]
+  public async Task An_image_that_wont_decode_asked_for_full_size_comes_back_as_its_own_bytes()
+  {
+    var unreadable = new Data(20, [1, 2, 3], "image/tiff", DataCategory.PersonAttachment);
+
+    var converted = await CreateConverter().ToObjectAsync(unreadable, CancellationToken.None);
+
+    var photo = Assert.IsType<PhotoInfo>(converted);
+    Assert.Equal([1, 2, 3], await PhotoBytes.ReadAsync(photo.Source));
+  }
 }

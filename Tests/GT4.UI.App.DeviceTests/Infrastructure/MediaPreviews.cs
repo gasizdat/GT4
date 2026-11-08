@@ -21,7 +21,7 @@ internal static class MediaPreviews
       .SelectMany(view => view.GestureRecognizers.OfType<TapGestureRecognizer>().Select(tap => (view, tap)))];
 
   public static PersonDataItem Item(TapGestureRecognizer tap) =>
-    (PersonDataItem)((AdornerCommandParameter)tap.CommandParameter).Element;
+    (PersonDataItem)((AdornerCommandParameter)tap.CommandParameter!).Element;
 
   public static async Task TapAsync(Page dialog, ICollection<PersonDataItem> items, PersonDataItem item)
   {
