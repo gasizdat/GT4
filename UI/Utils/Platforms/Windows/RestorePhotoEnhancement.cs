@@ -325,10 +325,6 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
   // needs more than one reflection.
   private static int ReflectIndex(int i, int length)
   {
-    if (length == 1)
-    {
-      return 0;
-    }
     var period = 2 * length;
     var m = ((i % period) + period) % period;
     return m < length ? m : period - 1 - m;
