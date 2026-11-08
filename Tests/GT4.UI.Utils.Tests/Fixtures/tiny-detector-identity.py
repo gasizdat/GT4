@@ -1,5 +1,5 @@
 # Builds tiny-detector-identity.onnx: python tiny-detector-identity.py tiny-detector-identity.onnx
-# Needs the onnx package; onnx 1.23.2 reproduces the committed file byte for byte.
+# Needs pip install -r requirements.txt, whose onnx reproduces the committed file byte for byte.
 import sys
 import onnx
 from onnx import TensorProto, helper
