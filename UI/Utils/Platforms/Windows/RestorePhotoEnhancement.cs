@@ -121,6 +121,32 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     return mask;
   }
 
+  // Spread evenly so the last tile ends at the photo's edge, not past it in reflect padding.
+  internal static IEnumerable<int> TileOrigins(int length)
+  {
+    var span = Math.Max(0, length - InpaintTileSize);
+    var stride = InpaintTileSize - InpaintTileOverlap;
+    var steps = (span + stride - 1) / stride;
+    var divisor = Math.Max(1, steps);
+    return Enumerable.Range(0, steps + 1).Select(i => i * span / divisor);
+  }
+
+  // Every unmasked pixel stays exactly the source pixel -- the invariant #506 calls for.
+  internal static void CompositeMaskedPixels(SKBitmap source, SKBitmap inpainted, SKBitmap mask, SKBitmap destination)
+  {
+    var pixels = source.Pixels;
+    var inpaintedPixels = BitmapColors.Of(inpainted);
+    var maskPixels = BitmapColors.Of(mask);
+    for (var i = 0; i < pixels.Length; i++)
+    {
+      if (maskPixels[i].Red != 0)
+      {
+        pixels[i] = inpaintedPixels[i];
+      }
+    }
+    destination.Pixels = pixels;
+  }
+
   private static bool[,] DilateMask(bool[,] mask, int width, int height)
   {
     for (var i = 0; i < MaskDilationIterations; i++)
@@ -181,16 +207,6 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var output = new SKBitmap(bitmap.Width, bitmap.Height);
     CompositeMaskedPixels(bitmap, inpaintedFull, mask, output);
     return output;
-  }
-
-  // Spread evenly so the last tile ends at the photo's edge, not past it in reflect padding.
-  internal static IEnumerable<int> TileOrigins(int length)
-  {
-    var span = Math.Max(0, length - InpaintTileSize);
-    var stride = InpaintTileSize - InpaintTileOverlap;
-    var steps = (span + stride - 1) / stride;
-    var divisor = Math.Max(1, steps);
-    return Enumerable.Range(0, steps + 1).Select(i => i * span / divisor);
   }
 
   private static bool TileHasDamage(SKBitmap mask, int tileX, int tileY) => HasDamageIn(
@@ -290,22 +306,6 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var nearest = Math.Min(fromStart, toEnd);
     var distance = Math.Min(nearest, InpaintTileOverlap);
     return distance / (float)InpaintTileOverlap;
-  }
-
-  // Every unmasked pixel stays exactly the source pixel -- the invariant #506 calls for.
-  internal static void CompositeMaskedPixels(SKBitmap source, SKBitmap inpainted, SKBitmap mask, SKBitmap destination)
-  {
-    var pixels = source.Pixels;
-    var inpaintedPixels = BitmapColors.Of(inpainted);
-    var maskPixels = BitmapColors.Of(mask);
-    for (var i = 0; i < pixels.Length; i++)
-    {
-      if (maskPixels[i].Red != 0)
-      {
-        pixels[i] = inpaintedPixels[i];
-      }
-    }
-    destination.Pixels = pixels;
   }
 
   private static (int Width, int Height) ShortSideTo(int width, int height, int shortSide)
