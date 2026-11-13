@@ -9,7 +9,7 @@ namespace GT4.UI.DeviceTests;
 
 /// <summary>
 /// The card floats over a chart, so it paints a fill of its own, and that fill has to carry the
-/// theme's ink for the name and dates.
+/// theme's ink for every line of its text.
 /// </summary>
 public class PersonCardViewTests
 {

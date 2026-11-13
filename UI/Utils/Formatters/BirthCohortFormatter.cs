@@ -5,7 +5,7 @@ namespace GT4.UI.Utils.Formatters;
 
 internal class BirthCohortFormatter : IBirthCohortFormatter
 {
-  // An Unknown date has no year (0), so it falls below the first cohort with the BCE years.
+  // An Unknown date carries year 0, so it falls below the table.
   public string? ToString(Date birthDate) =>
     (birthDate.Sign * birthDate.Year) switch
     {
