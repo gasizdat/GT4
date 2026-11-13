@@ -55,7 +55,8 @@ public class ColorizePhotoEnhancement : IPhotoEnhancement, IModelDefinition
     var outputName = session.OutputMetadata.Keys.First();
     var input = ToInputTensor(fullL, width, height);
 
-    using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
+    var inputValue = NamedOnnxValue.CreateFromTensor(inputName, input);
+    using var results = session.Run([inputValue]);
     var ab = (DenseTensor<float>)results.First(r => r.Name == outputName).AsTensor<float>();
 
     return ToOutputBitmap(fullL, ab, width, height);
