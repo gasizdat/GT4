@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using FluentAssertions;
+using GT4.Core.Project.Tests;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
 using Moq;
@@ -14,11 +15,11 @@ public class ModelDownloaderTests : IDisposable
 
   private readonly string _Root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
   private readonly FixedStorage _Storage;
-  private readonly TempFileSystem _FileSystem;
+  private readonly DiskFileSystem _FileSystem;
 
   public ModelDownloaderTests()
   {
-    _FileSystem = new TempFileSystem(_Root);
+    _FileSystem = new DiskFileSystem(_Root);
     _Storage = new FixedStorage(new DirectoryDescription(Environment.SpecialFolder.ApplicationData, ["models"]));
   }
 
