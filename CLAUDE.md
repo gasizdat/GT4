@@ -60,6 +60,15 @@ from the code.
   get too narrow to stay readable, independent of which count placement is used. Needs a
   substantially different visualization (scrollable/zoomable, or something other than one column
   per decade) to revisit, not another placement tweak.
+- **A queryable code model for finding refactoring candidates** (issue #587, CodeQL or our own
+  Roslyn-to-SQLite extractor plus a catalog of smell queries) — closed not planned. The prototype
+  worked and passed its acceptance test, but found almost nothing repo-wide: #586's smell had no
+  second instance, there were 3 unused parameters across 372 production files (#610), and the
+  broad "member never read through this holder" query was noise. Every comparable effort ended the
+  same way (#584, the ToList/ToArray sweep, #248, #157, #261). Trustworthy queries would also need
+  XAML, DI, Shell and reflection edges and upkeep on every SDK bump: a second product. Reopen only
+  if a sweep keeps needing the same queries, or a second #586-style smell escapes reading. For a
+  one-off run, reuse the prototype source posted on #587 instead of rebuilding it.
 
 ## Platform traps worth knowing before you hit them
 
