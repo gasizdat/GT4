@@ -40,7 +40,8 @@ public class PhotoEnhancer
     }
 
     var category = media.Info.Category;
-    var converter = _DataConverterResolver(category.IsAttachment() ? category : category.AsTaggedPhoto());
+    var converterCategory = category.IsAttachment() ? category : category.AsTaggedPhoto();
+    var converter = _DataConverterResolver(converterCategory);
     var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, UIStrings.HintPhotoEnhancementInProgress, _AlertService);
     await page.Navigation.PushModalAsync(dialog);
     try

@@ -348,7 +348,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
     var attachments = await PersonDataItem.ToDataAsync(_Attachments);
-    Complete(new(name, maleName, femaleName, allPhotos, attachments));
+    var result = new Result(name, maleName, femaleName, allPhotos, attachments);
+    Complete(result);
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
@@ -400,7 +401,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     if (copy is not null)
     {
       var item = GetFamilyData(copy, copy.Category);
-      media.Insert(media.IndexOf(source) + 1, item);
+      var index = media.IndexOf(source);
+      media.Insert(index + 1, item);
       IsModified = true;
     }
   }

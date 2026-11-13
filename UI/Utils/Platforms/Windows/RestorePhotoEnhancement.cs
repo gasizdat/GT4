@@ -88,7 +88,8 @@ public class RestorePhotoEnhancement : IPhotoEnhancement, IModelDefinition
 
     var inputName = detector.InputMetadata.Keys.First();
     var outputName = detector.OutputMetadata.Keys.First();
-    using var results = detector.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
+    var inputValue = NamedOnnxValue.CreateFromTensor(inputName, input);
+    using var results = detector.Run([inputValue]);
     var logits = (DenseTensor<float>)results.First(r => r.Name == outputName).AsTensor<float>();
     var logitValues = logits.Buffer.Span;
     var logitWidth = logits.Dimensions[3];

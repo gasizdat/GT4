@@ -38,7 +38,10 @@ internal static class Lab
     var rl = 3.2404542f * x - 1.5371385f * y - 0.4985314f * z;
     var gl = -0.9692660f * x + 1.8760108f * y + 0.0415560f * z;
     var bl = 0.0556434f * x - 0.2040259f * y + 1.0572252f * z;
-    return (Gamma(Math.Clamp(rl, 0f, 1f)), Gamma(Math.Clamp(gl, 0f, 1f)), Gamma(Math.Clamp(bl, 0f, 1f)));
+    var rc = Math.Clamp(rl, 0f, 1f); 
+    var gc = Math.Clamp(gl, 0f, 1f); 
+    var bc = Math.Clamp(bl, 0f, 1f);
+    return (Gamma(rc), Gamma(gc), Gamma(bc));
   }
 
   static float InvGamma(float c) => c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);

@@ -69,7 +69,8 @@ public class UpscalePhotoEnhancement : IPhotoEnhancement, IModelDefinition
         padded.Intersect(bitmap.Info.Rect);
         var input = ToInputTensor(colors, bitmap.Width, padded);
 
-        using var results = session.Run([NamedOnnxValue.CreateFromTensor(inputName, input)]);
+        var inputValue = NamedOnnxValue.CreateFromTensor(inputName, input);
+        using var results = session.Run([inputValue]);
         var output = (DenseTensor<float>)results.First(r => r.Name == outputName).AsTensor<float>();
         CopyTileInto(upscaled, output, tile, padded);
       }

@@ -9,7 +9,11 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
 {
   // A file reaches its cache name only after the hash check below passes, via an atomic Move, so
   // it's never re-verified.
-  public bool IsDownloaded(ModelDescriptor model) => fileSystem.FileExists(CachedFile(model));
+  public bool IsDownloaded(ModelDescriptor model)
+  {
+    var file = CachedFile(model);
+    return fileSystem.FileExists(file);
+  }
 
   public async Task EnsureModelAsync(ModelDescriptor model, CancellationToken token)
   {
@@ -18,7 +22,8 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
       return;
     }
 
-    var temp = new FileDescription(storage.Models, TempFileName(model), null);
+    var tempFileName = TempFileName(model);
+    var temp = new FileDescription(storage.Models, tempFileName, null);
     try
     {
       using (var http = httpClientFactory.CreateClient())
@@ -31,7 +36,8 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
       string hash;
       using (var hashStream = fileSystem.OpenReadStream(temp))
       {
-        hash = Convert.ToHexString(await SHA256.HashDataAsync(hashStream, token).ConfigureAwait(false));
+        var digest = await SHA256.HashDataAsync(hashStream, token).ConfigureAwait(false);
+        hash = Convert.ToHexString(digest);
       }
       if (!hash.Equals(model.Sha256, StringComparison.OrdinalIgnoreCase))
       {
@@ -40,7 +46,8 @@ internal class ModelDownloader(IHttpClientFactory httpClientFactory, IFileSystem
           new InvalidDataException($"Expected SHA-256 {model.Sha256}, got {hash}."));
       }
 
-      fileSystem.Move(temp, CachedFile(model));
+      var cached = CachedFile(model);
+      fileSystem.Move(temp, cached);
     }
     catch (OperationCanceledException) when (token.IsCancellationRequested)
     {

@@ -420,7 +420,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     if (copy is not null)
     {
       var item = GetPersonData(copy, copy.Category);
-      media.Insert(media.IndexOf(source) + 1, item);
+      var index = media.IndexOf(source);
+      media.Insert(index + 1, item);
       IsModified = true;
     }
   }
