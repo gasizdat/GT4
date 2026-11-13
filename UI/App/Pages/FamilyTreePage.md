@@ -164,9 +164,10 @@ between them, centred on a focal person.
   it. The lift raises no tap, so a hold never re-centres. The hold is taken off while arranging: the
   long-press it turns on would stop a finger that rests before dragging from moving the node. iOS has
   neither.
-- The hovered person (`HoveredPerson`) also shows in a `PersonCardView`: their photo, full name and
-  life dates, in a card stacked under the "More ancestors" button. A portrait phone has no room for
-  it beside the button. The card is input-transparent, so a node under it still takes the pointer.
+- The hovered person (`HoveredPerson`) also shows in a `PersonCardView`: their photo, full name, life
+  dates and birth cohort, in a card stacked under the "More ancestors" button. A portrait phone has
+  no room for it beside the button. The card is input-transparent, so a node under it still takes
+  the pointer.
 - A highlight doubles the weight of the node's ring (`FamilyTreeNodeView.SetHighlighted`, which grows
   it outward so the photo and name don't move) and of the person's own lines, which are also raised
   above the plain ones. The colours stay as they are.

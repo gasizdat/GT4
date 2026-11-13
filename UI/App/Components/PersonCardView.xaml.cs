@@ -1,12 +1,22 @@
 using GT4.Core.Project.Dto;
+using GT4.UI.Utils.Formatters;
 
 namespace GT4.UI.Components;
 
 public partial class PersonCardView : ContentView
 {
-  public PersonCardView()
+  private readonly IBirthCohortFormatter _BirthCohortFormatter;
+
+  protected PersonCardView(IServiceProvider serviceProvider)
   {
+    _BirthCohortFormatter = serviceProvider.GetRequiredService<IBirthCohortFormatter>();
     InitializeComponent();
+  }
+
+  public PersonCardView()
+    : this(GT4Services.Provider)
+  {
+
   }
 
   public static readonly BindableProperty PersonProperty =
@@ -18,6 +28,15 @@ public partial class PersonCardView : ContentView
     set => SetValue(PersonProperty, value);
   }
 
-  private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue) =>
-    ((PersonCardView)obj).IsVisible = newValue is not null;
+  public string? BirthCohort => Person is null ? null : _BirthCohortFormatter.ToString(Person.BirthDate);
+
+  public bool HasBirthCohort => BirthCohort is not null;
+
+  private static void OnPersonChanged(BindableObject obj, object oldValue, object newValue)
+  {
+    var card = (PersonCardView)obj;
+    card.IsVisible = newValue is not null;
+    card.OnPropertyChanged(nameof(BirthCohort));
+    card.OnPropertyChanged(nameof(HasBirthCohort));
+  }
 }

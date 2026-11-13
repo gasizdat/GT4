@@ -1712,4 +1712,31 @@ FN - nom de famille</value>
   <data name="DateInOtherCalendarPrompt_2" xml:space="preserve">
     <value>Saisissez une date dans le calendrier {0}. {1}</value>
   </data>
+  <data name="BirthCohortLost" xml:space="preserve">
+    <value>Génération perdue</value>
+  </data>
+  <data name="BirthCohortGreatest" xml:space="preserve">
+    <value>Grande Génération</value>
+  </data>
+  <data name="BirthCohortSilent" xml:space="preserve">
+    <value>Génération silencieuse</value>
+  </data>
+  <data name="BirthCohortBabyBoomers" xml:space="preserve">
+    <value>Baby-boomers</value>
+  </data>
+  <data name="BirthCohortX" xml:space="preserve">
+    <value>Génération X</value>
+  </data>
+  <data name="BirthCohortMillennials" xml:space="preserve">
+    <value>Génération Y</value>
+  </data>
+  <data name="BirthCohortZ" xml:space="preserve">
+    <value>Génération Z</value>
+  </data>
+  <data name="BirthCohortAlpha" xml:space="preserve">
+    <value>Génération Alpha</value>
+  </data>
+  <data name="BirthCohortBeta" xml:space="preserve">
+    <value>Génération Bêta</value>
+  </data>
 </root>

@@ -1,6 +1,7 @@
 using GT4.Core.Project.Dto;
 using GT4.Core.Utils;
 using GT4.UI.Components;
+using GT4.UI.Resources;
 using Microsoft.Maui.ApplicationModel;
 using Xunit;
 
@@ -14,9 +15,15 @@ public class PersonCardViewTests
 {
   private const double TextContrast = 4.5;
 
-  private static PersonInfo P(int id, string firstName) =>
-    new(id, Date.Create(1900, null, null, DateStatus.MonthUnknown), null, BiologicalSex.Male,
+  private static PersonInfo P(int id, string firstName, int birthYear = 1900) =>
+    new(id, Date.Create(birthYear, null, null, DateStatus.MonthUnknown), null, BiologicalSex.Male,
       [new Name(id * 100, firstName, NameType.FirstName | NameType.MaleDeclension, null)], null);
+
+  private static Label CohortLabel(Border chrome)
+  {
+    var lines = (VerticalStackLayout)chrome.Content!;
+    return lines.Children.OfType<Label>().Single();
+  }
 
   [Fact]
   public async Task A_card_shows_only_while_it_has_a_person()
@@ -36,6 +43,36 @@ public class PersonCardViewTests
     Assert.Equal(new[] { false, true, false }, shown);
   }
 
+  [Fact]
+  public async Task A_card_names_the_birth_cohort_of_a_person_born_in_a_covered_year()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    var (visible, text, expected) = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var card = new PersonCardView { Person = P(1, "Ivan", 1900) };
+      var cohort = CohortLabel((Border)card.Content);
+      return (cohort.IsVisible, cohort.Text, UIStrings.BirthCohortLost);
+    });
+
+    Assert.True(visible);
+    Assert.Equal(expected, text);
+  }
+
+  [Fact]
+  public async Task A_card_shows_no_cohort_line_for_a_person_born_before_1883()
+  {
+    await MainThread.InvokeOnMainThreadAsync(TestStyles.EnsureLoaded);
+
+    var visible = await MainThread.InvokeOnMainThreadAsync(() =>
+    {
+      var card = new PersonCardView { Person = P(1, "Ivan", 1882) };
+      return CohortLabel((Border)card.Content).IsVisible;
+    });
+
+    Assert.False(visible);
+  }
+
   [Theory]
   [InlineData(AppTheme.Light)]
   [InlineData(AppTheme.Dark)]
@@ -45,8 +82,10 @@ public class PersonCardViewTests
     {
       var card = new PersonCardView { Person = P(1, "Ivan") };
       var chrome = (Border)card.Content;
-      var info = (PersonInfoView)chrome.Content!;
-      var labels = ((Grid)info.Content).Children.OfType<Label>();
+      var lines = (VerticalStackLayout)chrome.Content!;
+      var info = lines.Children.OfType<PersonInfoView>().Single();
+      var cohort = CohortLabel(chrome);
+      var labels = ((Grid)info.Content).Children.OfType<Label>().Append(cohort);
       return (chrome.BackgroundColor, labels.Select(label => label.TextColor).ToArray());
     });
 

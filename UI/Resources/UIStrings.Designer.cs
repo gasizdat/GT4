@@ -242,7 +242,88 @@ namespace GT4.UI.Resources {
                 return ResourceManager.GetString("BiologicalSexUnknown", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Generation Alpha.
+        /// </summary>
+        public static string BirthCohortAlpha {
+            get {
+                return ResourceManager.GetString("BirthCohortAlpha", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Baby Boomers.
+        /// </summary>
+        public static string BirthCohortBabyBoomers {
+            get {
+                return ResourceManager.GetString("BirthCohortBabyBoomers", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Generation Beta.
+        /// </summary>
+        public static string BirthCohortBeta {
+            get {
+                return ResourceManager.GetString("BirthCohortBeta", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Greatest Generation.
+        /// </summary>
+        public static string BirthCohortGreatest {
+            get {
+                return ResourceManager.GetString("BirthCohortGreatest", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Lost Generation.
+        /// </summary>
+        public static string BirthCohortLost {
+            get {
+                return ResourceManager.GetString("BirthCohortLost", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Millennials.
+        /// </summary>
+        public static string BirthCohortMillennials {
+            get {
+                return ResourceManager.GetString("BirthCohortMillennials", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Silent Generation.
+        /// </summary>
+        public static string BirthCohortSilent {
+            get {
+                return ResourceManager.GetString("BirthCohortSilent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Generation X.
+        /// </summary>
+        public static string BirthCohortX {
+            get {
+                return ResourceManager.GetString("BirthCohortX", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Generation Z.
+        /// </summary>
+        public static string BirthCohortZ {
+            get {
+                return ResourceManager.GetString("BirthCohortZ", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Add attachment.
         /// </summary>
