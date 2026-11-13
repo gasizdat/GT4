@@ -301,8 +301,7 @@ public class CreateOrUpdateNameDialogTests
   public async Task A_family_image_attachments_downsized_thumbnail_opens_its_full_size_image_and_a_documents_nothing()
   {
     var services = new TestServices();
-    var scan = new Data(
-      10, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "deed.png"), "image/png", DataCategory.FamilyAttachment);
+    var scan = TestImages.ScanAttachment(10, DataCategory.FamilyAttachment);
     var dialog = await CreateDialogAsync(services, [scan, Attachment(11)]);
     await using var window = await WindowHost.AttachAsync(dialog);
     var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);

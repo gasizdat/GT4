@@ -1253,28 +1253,17 @@ public class PersonPageTests
   public async Task An_image_attachment_row_gets_a_downsized_thumbnail_and_a_document_row_none()
   {
     var services = new TestServices();
-    // Wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
-    var scan = new Data(
-      43, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.PersonAttachment);
-    var deed = new Data(
-      44, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", DataCategory.PersonAttachment);
+    var scan = TestImages.ScanAttachment(43, DataCategory.PersonAttachment);
+    var deed = TestImages.DeedAttachment(44, DataCategory.PersonAttachment);
     var person = CreateSamplePerson() with { Attachments = [scan, deed] };
     services.PersonManager.Setup(p => p.GetPersonFullInfoAsync(It.IsAny<Person>(), It.IsAny<CancellationToken>())).ReturnsAsync(person);
     var page = await CreatePageAsync(services);
     await WaitForLoadAsync(page, services, () => page.PersonInfo = person);
     var rows = page.AttachmentItems;
 
-    var thumbnail = await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => rows[0].Thumbnail),
-      source => source is not null,
-      timeoutMessage: "The scan's thumbnail never resolved.");
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => rows[1].HasThumbnail),
-      shown => shown,
-      TimeSpan.FromSeconds(1),
-      "A document row resolved a thumbnail.");
+    var thumbnail = await AttachmentRows.WaitForImageThumbnailOnlyAsync(rows[0], rows[1]);
 
-    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await PhotoBytes.ReadAsync(thumbnail!)));
+    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await PhotoBytes.ReadAsync(thumbnail)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
