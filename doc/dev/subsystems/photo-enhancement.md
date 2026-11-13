@@ -152,6 +152,29 @@ and is compared case-insensitively.
   Debug run on one machine took ~15 minutes once — a one-time JIT/cold-start anomaly, not a
   sustained cost; re-running under the same conditions matched the Release number.
 
+## ONNX Runtime and Windows ML
+
+`Microsoft.ML.OnnxRuntime` (versioned in `Directory.Packages.props`) supplies both the managed
+binding, `Microsoft.ML.OnnxRuntime.dll`, and the native `onnxruntime.dll`. The Windows App SDK
+comes in transitively through MAUI. It resolves to 1.7.250909003 today, which carries neither.
+
+From 1.8 on, the `Microsoft.WindowsAppSDK` metapackage depends on `Microsoft.WindowsAppSDK.ML`
+(Windows ML). Version 1.8.2223 of that package ships its own `Microsoft.ML.OnnxRuntime.dll` under
+`lib/net8.0-windows10.0.17763.0` and a win-x64 `onnxruntime.dll`. After that bump, two packages
+supply the same assembly name, and a second ONNX Runtime may differ from the version the enhancers
+were measured and tested against.
+
+The MAUI bump that first resolves Windows App SDK 1.8 therefore needs these checks before it
+merges:
+
+- Confirm the version with `dotnet list UI\App\AppWinOnly.csproj package --include-transitive
+  --framework net10.0-windows10.0.19041.0`.
+- See which `Microsoft.ML.OnnxRuntime.dll` and `onnxruntime.dll` land in the publish output.
+- Build a Release MSIX the way `release.yml` does, and run one enhancement from it.
+
+The alternative to weigh at that point is dropping the direct `Microsoft.ML.OnnxRuntime` reference
+in favour of Windows ML's runtime. #506's follow-ups already name Windows ML for GPU acceleration.
+
 ## Publishing a model release
 
 Convention: one `models-vN` GitHub release per asset *generation*, not per model —
