@@ -112,6 +112,21 @@ public class RestorePhotoEnhancementTests : IDisposable
   }
 
   [Theory]
+  [InlineData(1, 16)]
+  [InlineData(16, 1)]
+  public async Task PhotoOnePixelAcross_IsInpaintedThroughItsReflectPadding(int width, int height)
+  {
+    _Models.Seed(RestorePhotoEnhancement.DetectorModel, "tiny-detector-identity.onnx");
+    _Models.Seed(RestorePhotoEnhancement.InpainterModel, "tiny-inpainter-constant.onnx");
+    var enhancement = new RestorePhotoEnhancement(_Models.SessionProvider());
+    using var photo = SKBitmap.Decode(SolidColorPng(width, height, 255, 255, 255));
+
+    using var bitmap = await enhancement.ApplyAsync(photo, CancellationToken.None);
+
+    bitmap.Pixels.Should().OnlyContain(pixel => pixel == new SKColor(128, 128, 128));
+  }
+
+  [Theory]
   [InlineData(300, new[] { 0 })]
   [InlineData(512, new[] { 0 })]
   [InlineData(600, new[] { 0, 88 })]
