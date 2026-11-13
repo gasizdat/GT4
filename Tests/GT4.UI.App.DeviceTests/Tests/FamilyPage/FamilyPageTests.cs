@@ -578,7 +578,7 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => rowTap!.Command!.Execute(scan));
     var dialog = await ModalDialogHarness.WaitForModalAsync<PhotoViewerDialog>(page);
 
-    Assert.Same(scan.Image!.Source, Assert.Single(dialog.Photos));
+    Assert.Same(scan.Image, Assert.Single(dialog.Photos));
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 

@@ -62,9 +62,10 @@ public sealed class AttachmentDataConverter : IDataConverter
     MimeType: string.IsNullOrEmpty(mimeType) ? MimeTypeOctetStream : mimeType,
     Category: _Category);
 
-  private async Task<Data> FromImageAsync(AttachmentInfo attachment, PhotoInfo image, CancellationToken token)
+  private async Task<Data> FromImageAsync(AttachmentInfo attachment, ImageSource image, CancellationToken token)
   {
-    var encoded = await _ImageConverter.FromObjectAsync(image, token);
+    var photo = new PhotoInfo(image, null);
+    var encoded = await _ImageConverter.FromObjectAsync(photo, token);
     var form = GedcomMedia.SniffForm(encoded!.Content);
     var fileName = Path.ChangeExtension(attachment.FileName, form);
     var mimeType = GedcomMedia.ToMimeType(form);
@@ -72,9 +73,10 @@ public sealed class AttachmentDataConverter : IDataConverter
     return await GedcomPhotoResidue.WithTitleAsync(copy, attachment.Title, token);
   }
 
-  private async Task<PhotoInfo?> ToImageAsync(Data data, CancellationToken token)
+  private async Task<ImageSource?> ToImageAsync(Data data, CancellationToken token)
   {
     var unwrapped = data with { Content = GedcomPhotoResidue.ExtractImageBytes(data.Content) };
-    return await _ImageConverter.ToObjectAsync(unwrapped, token) as PhotoInfo;
+    var photo = await _ImageConverter.ToObjectAsync(unwrapped, token) as PhotoInfo;
+    return photo?.Source;
   }
 }

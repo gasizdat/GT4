@@ -45,7 +45,7 @@ public abstract class DataItemBase : CollectionItemBase<Data>, INotifyPropertyCh
   protected static ImageSource? ImageOf(object? content) => content switch
   {
     PhotoInfo photo => photo.Source,
-    AttachmentInfo attachment => attachment.Image?.Source,
+    AttachmentInfo attachment => attachment.Image,
     _ => null
   };
 

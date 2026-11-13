@@ -338,7 +338,7 @@ public partial class PersonPage : ContentPage
     {
       AttachmentInfo attachment => attachment,
       // Opened like an image attachment, which goes straight to the viewer and never reads FileName.
-      PhotoInfo photo => new AttachmentInfo(string.Empty, photo.Caption, data, photo),
+      PhotoInfo photo => new AttachmentInfo(string.Empty, photo.Caption, data, photo.Source),
       _ => null
     };
   }
@@ -349,7 +349,7 @@ public partial class PersonPage : ContentPage
     {
       // OnAttachmentLinkTapped's caller reaches here off the UI thread; PushModalAsync needs it.
       await MainThread.InvokeOnMainThreadAsync(
-        () => Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService)));
+        () => Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image], _AlertService)));
       return;
     }
 
