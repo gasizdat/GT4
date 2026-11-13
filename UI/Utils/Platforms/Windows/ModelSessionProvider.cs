@@ -19,7 +19,8 @@ internal class ModelSessionProvider(IModelDownloader downloader, IFileSystem fil
       if (!_Sessions.TryGetValue(model, out var session))
       {
         await downloader.EnsureModelAsync(model, token);
-        var path = fileSystem.ToPath(new FileDescription(storage.Models, model.CacheFileName, null));
+        var file = new FileDescription(storage.Models, model.CacheFileName, null);
+        var path = fileSystem.ToPath(file);
         session = new InferenceSession(path);
         _Sessions.Add(model, session);
       }
