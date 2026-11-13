@@ -32,7 +32,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     SelectRelativesDialog.Factory SelectRelativesDialogFactory,
     SelectPersonDialog.Factory SelectPersonDialogFactory,
     SelectMediaDialog.Factory SelectMediaDialogFactory,
-    InlineMediaProvider MediaProvider)
+    InlineMediaProvider MediaProvider,
+    PhotoEnhancer PhotoEnhancer)
   {
     public CreateOrUpdatePersonDialog Create(PersonFullInfo? person) =>
       new CreateOrUpdatePersonDialog(this, person);
@@ -172,6 +173,8 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
 
   public ICollection<PersonDataItem> Photos => _Photos;
 
+  public bool CanEnhance => _Factory.PhotoEnhancer.CanEnhance;
+
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
@@ -243,13 +246,19 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     return true;
   }
 
-  private void Cancel() => _Info.TrySetResult(null);
+  private void Cancel() => Complete(null);
+
+  private void Complete(PersonFullInfo? result)
+  {
+    _Factory.PhotoEnhancer.ReleaseModels();
+    _Info.TrySetResult(result);
+  }
 
   private async Task OnCreatePersonCommandAsync()
   {
     if (_NotReady)
     {
-      _Info.TrySetResult(null);
+      Cancel();
       return;
     }
 
@@ -281,7 +290,7 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       gedcomData: _GedcomData,
       attachments: attachments);
 
-    _Info.TrySetResult(result);
+    Complete(result);
   }
 
   protected async Task OnAddPersonNameAsync()
@@ -403,6 +412,18 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
     }
 
     IsModified = true;
+  }
+
+  private async Task OnEnhanceMediaAsync(ObservableCollection<PersonDataItem> media, PersonDataItem source)
+  {
+    var copy = await _Factory.PhotoEnhancer.EnhanceAsync(this, source);
+    if (copy is not null)
+    {
+      var item = GetPersonData(copy, copy.Category);
+      var index = media.IndexOf(source);
+      media.Insert(index + 1, item);
+      IsModified = true;
+    }
   }
 
   private async Task OnAddOrUpdateAttachmentAsync(PersonDataItem? attachment)
@@ -599,6 +620,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "EditPhotoCommand" && adorner.Element is PersonDataItem photo:
         await OnAddOrUpdatePhotoAsync(photo);
         break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhancePhotoCommand" && adorner.Element is PersonDataItem photo:
+        await OnEnhanceMediaAsync(_Photos, photo);
+        break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemovePhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
         IsModified = true;
@@ -612,6 +636,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "EditAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         await OnAddOrUpdateAttachmentAsync(attachment);
         break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhanceAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        await OnEnhanceMediaAsync(_Attachments, attachment);
+        break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         _Attachments.Remove(attachment);
         IsModified = true;
@@ -624,6 +651,9 @@ public partial class CreateOrUpdatePersonDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditCaptionCommand" && adorner.Element is PersonDataItem item:
         await OnEditCaptionAsync(item);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "PreviewMediaCommand" && adorner.Element is PersonDataItem { Image: { } image }:
+        await Navigation.PushModalAsync(new PhotoViewerDialog([image], _Factory.AlertService));
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditNameCommand" && adorner.Element is NameInfoItem name:
         await OnEditPersonNameAsync(name);

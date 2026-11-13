@@ -187,7 +187,7 @@ public sealed class GalleryDataItem : CollectionItemBase<Data>, INotifyPropertyC
       var source = content switch
       {
         PhotoInfo photo => photo.Source,
-        AttachmentInfo attachment => attachment.Image?.Source,
+        AttachmentInfo attachment => attachment.Image,
         _ => null
       };
       var caption = content switch

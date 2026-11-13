@@ -41,13 +41,23 @@ public class ImageDownsizingTests
   }
 
   [Fact]
-  public void UndecodableBytesAreRejected()
+  public void RotatedPhotoIsScaledUpright()
+  {
+    var original = UprightDecodeTests.MarkedJpeg(SKEncodedOrigin.RightTop);
+
+    var downsized = ImageUtils.DownsizedPng(original, 32);
+
+    PixelSizeOf(downsized).Should().Be(new Size(16, 32));
+  }
+
+  [Fact]
+  public void UndecodableBytesComeBackAsNull()
   {
     byte[] notAnImage = [0x00, 0x01, 0x02, 0x03];
 
-    var downsize = () => ImageUtils.DownsizedPng(notAnImage, 100);
+    var downsized = ImageUtils.DownsizedPng(notAnImage, 100);
 
-    downsize.Should().Throw<InvalidOperationException>();
+    downsized.Should().BeNull();
   }
 
   private static byte[] PngOfSize(int width, int height)
@@ -60,9 +70,10 @@ public class ImageDownsizingTests
     return data.ToArray();
   }
 
-  private static Size PixelSizeOf(byte[] data)
+  private static Size PixelSizeOf(byte[]? data)
   {
-    var size = ImageUtils.PixelSize(data);
+    data.Should().NotBeNull();
+    var size = ImageUtils.PixelSize(data!);
     size.Should().NotBeNull();
     return size!.Value;
   }

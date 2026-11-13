@@ -40,7 +40,7 @@ public partial class PersonPage : ContentPage
   private int _NavigationIndex = -1;
   private PersonFullInfo _PersonFullInfo = PersonFullInfo.Empty;
   private PhotoInfo[] _Photos = [];
-  private AttachmentInfo[] _Attachments = [];
+  private AttachmentItem[] _AttachmentItems = [];
   private string _Biography = string.Empty;
   private bool _IsNarrow = true;
   private PersonTab _SelectedTab;
@@ -201,9 +201,9 @@ public partial class PersonPage : ContentPage
 
   public InlineMediaResolver MediaResolver => _MediaResolver;
 
-  public AttachmentInfo[] Attachments => _Attachments;
+  public AttachmentItem[] AttachmentItems => _AttachmentItems;
 
-  public bool ShowAttachments => _Attachments.Length != 0;
+  public bool ShowAttachments => _AttachmentItems.Length != 0;
 
   public PersonFullInfo PersonFullInfo => _PersonFullInfo;
 
@@ -316,7 +316,7 @@ public partial class PersonPage : ContentPage
   // A dangling link (the referenced attachment was since removed) is simply inert.
   protected async Task OpenAttachmentLinkAsync(int attachmentId)
   {
-    var attachment = _Attachments.FirstOrDefault(a => a.Data.Id == attachmentId);
+    var attachment = _AttachmentItems.FirstOrDefault(item => item.Attachment.Data.Id == attachmentId)?.Attachment;
     attachment ??= await TryResolveAttachmentAsync(attachmentId);
     if (attachment is not null)
     {
@@ -338,7 +338,7 @@ public partial class PersonPage : ContentPage
     {
       AttachmentInfo attachment => attachment,
       // Opened like an image attachment, which goes straight to the viewer and never reads FileName.
-      PhotoInfo photo => new AttachmentInfo(string.Empty, photo.Caption, data, photo),
+      PhotoInfo photo => new AttachmentInfo(string.Empty, photo.Caption, data, photo.Source),
       _ => null
     };
   }
@@ -349,7 +349,7 @@ public partial class PersonPage : ContentPage
     {
       // OnAttachmentLinkTapped's caller reaches here off the UI thread; PushModalAsync needs it.
       await MainThread.InvokeOnMainThreadAsync(
-        () => Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService)));
+        () => Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image], _AlertService)));
       return;
     }
 
@@ -444,7 +444,8 @@ public partial class PersonPage : ContentPage
   {
     _PersonFullInfo = data.PersonFullInfo;
     _Photos = data.Photos;
-    _Attachments = data.Attachments;
+    _AttachmentItems = [.. data.Attachments.Select(attachment =>
+      new AttachmentItem(attachment, _DataConverterResolver, _CancellationTokenProvider, _AlertService))];
     _Biography = BiographySections.Combine(data.Bio, data.GedcomDetails, data.FamilyDetails);
     _AllRoots = data.Roots;
     // A tab is hidden for a person without its content, which would leave the body blank and unleavable.

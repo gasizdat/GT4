@@ -92,28 +92,36 @@
                     Text="{x:Static resources:UIStrings.FieldPersonAttachments}" />
 
                 <CollectionView
-                    ItemsSource="{Binding Attachments, Source={x:Reference Root}}"
+                    ItemsSource="{Binding AttachmentItems, Source={x:Reference Root}}"
                     SelectionMode="Single">
                   <CollectionView.ItemTemplate>
                     <DataTemplate>
                       <Grid
                           Padding="{StaticResource CollectionItemsVerticalPadding}"
+                          ColumnDefinitions="Auto, *"
                           Style="{StaticResource HoverSubItem}">
                         <Grid.GestureRecognizers>
                           <TapGestureRecognizer
                               Command="{Binding Path=PageCommand, Source={x:Reference Root}}"
-                              CommandParameter="{Binding .}" />
+                              CommandParameter="{Binding Attachment}" />
                         </Grid.GestureRecognizers>
 
-                        <VerticalStackLayout>
+                        <Image
+                            Grid.Column="0"
+                            Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+                            IsVisible="{Binding HasThumbnail}"
+                            Source="{Binding Thumbnail}"
+                            Style="{StaticResource PhotoThumbStyle}" />
+
+                        <VerticalStackLayout Grid.Column="1">
                           <Label
                               Style="{StaticResource FieldValue}"
-                              Text="{Binding DisplayName}" />
+                              Text="{Binding Attachment.DisplayName}" />
                           <Label
-                              IsVisible="{Binding ShowFileName}"
+                              IsVisible="{Binding Attachment.ShowFileName}"
                               Opacity="0.6"
                               Style="{StaticResource FieldValue}"
-                              Text="{Binding FileName}" />
+                              Text="{Binding Attachment.FileName}" />
                         </VerticalStackLayout>
                       </Grid>
                     </DataTemplate>

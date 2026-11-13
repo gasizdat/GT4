@@ -28,6 +28,7 @@ public partial class NamesPage : ContentPage
   private readonly IAlertService _AlertService;
   private readonly INameFormatter _NameFormatter;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly PhotoEnhancer _PhotoEnhancer;
   private NameTypeInfoItem _CurrentNameType;
   private Name? _CurrentName;
   private int? _CurrentNameId;
@@ -43,7 +44,8 @@ public partial class NamesPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameFormatter nameFormatter,
     IAlertService alertService,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    PhotoEnhancer photoEnhancer
     )
   {
     var nameTypes = new[]
@@ -61,6 +63,7 @@ public partial class NamesPage : ContentPage
     _AlertService = alertService;
     _NameFormatter = nameFormatter;
     _DataConverterResolver = dataConverterResolver;
+    _PhotoEnhancer = photoEnhancer;
     Loading = new PageLoading(_AlertService);
     _EditNameCommand = new SafeCommand(OnEditCommandAsync, _AlertService);
     _DeleteNameCommand = new SafeCommand(OnDeleteCommandAsync, _AlertService);
@@ -80,7 +83,7 @@ public partial class NamesPage : ContentPage
   {
     if (obj is Name name)
     {
-      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation, _DataConverterResolver);
+      await CreateOrUpdateNameDialog.UpdateNameAsync(name, _CurrentProjectProvider, _CancellationTokenProvider, _NameTypeFormatter, _AlertService, Navigation, _DataConverterResolver, _PhotoEnhancer);
       RequestUpdateNames(name);
     }
   }
@@ -143,7 +146,7 @@ public partial class NamesPage : ContentPage
       _ => throw new ApplicationException(nameof(OnPageCommandAsync))
     };
 
-    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver);
+    var dialog = new CreateOrUpdateNameDialog(nameType, _NameTypeFormatter, _AlertService, _CancellationTokenProvider, _DataConverterResolver, _PhotoEnhancer);
 
     await Navigation.PushModalAsync(dialog);
     var info = await dialog.Info;

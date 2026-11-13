@@ -37,13 +37,15 @@ public static class ImageUtils
   public static ImageSource TransparentImageStub =>
     ImageSource.FromStream(token => Task.Run<Stream>(() => new MemoryStream(TransparentPngData), token));
 
+  public static ImageSource UnreadableImageStub => ImageFromRawResource("unreadable_image.png", ThumbnailSize);
+
   /// <summary>
   /// Decodes <paramref name="data"/>, scales it so its longest side is <paramref name="maxSize"/> and
-  /// re-encodes it as PNG. Lets callers keep a small thumbnail instead of a full-resolution bitmap when
-  /// the image is only ever shown tiny (a family-tree node decodes its source to a ~60px circle, so the
-  /// full-res decode is hundreds of times larger than needed).
+  /// re-encodes it as PNG, or returns null when the bytes don't decode. Lets callers keep a small thumbnail
+  /// instead of a full-resolution bitmap when the image is only ever shown tiny (a family-tree node decodes
+  /// its source to a ~60px circle, so the full-res decode is hundreds of times larger than needed).
   /// </summary>
-  public static byte[] DownsizedPng(byte[] data, int maxSize)
+  public static byte[]? DownsizedPng(byte[] data, int maxSize)
   {
     using var input = new MemoryStream(data);
     return DownsizedPngStream(input, maxSize);
@@ -102,7 +104,8 @@ public static class ImageUtils
 
           if (maxSize.HasValue)
           {
-            bytes = DownsizedPngStream(originalStream, maxSize.Value);
+            bytes = DownsizedPngStream(originalStream, maxSize.Value)
+              ?? throw new InvalidOperationException($"Could not decode the {resourceName} resource.");
           }
           else
           {
@@ -117,6 +120,41 @@ public static class ImageUtils
         return new MemoryStream(bytes!);
       });
     })!;
+  }
+
+  /// <summary>
+  /// Skia's encoders write no EXIF, so a bitmap that gets re-encoded needs its orientation applied to the
+  /// pixels, or the copy loses the only record of how to turn it.
+  /// </summary>
+  public static SKBitmap? DecodeUpright(Stream stream)
+  {
+    using var data = SKData.Create(stream);
+    using var codec = SKCodec.Create(data);
+    if (codec is null)
+    {
+      return null;
+    }
+
+    var decoded = SKBitmap.Decode(codec);
+    var origin = codec.EncodedOrigin;
+    if (decoded is null || origin == SKEncodedOrigin.TopLeft)
+    {
+      return decoded;
+    }
+
+    using (decoded)
+    {
+      var (width, height) = origin >= SKEncodedOrigin.LeftTop
+        ? (decoded.Height, decoded.Width)
+        : (decoded.Width, decoded.Height);
+      var info = decoded.Info.WithSize(width, height);
+      var upright = new SKBitmap(info);
+      using var canvas = new SKCanvas(upright);
+      var matrix = OriginMatrix(origin, decoded.Width, decoded.Height);
+      canvas.SetMatrix(matrix);
+      canvas.DrawBitmap(decoded, 0, 0, SKSamplingOptions.Default);
+      return upright;
+    }
   }
 
   public static async Task<byte[]?> ToBytesAsync(ImageSource? source, IHttpClientFactory httpClientFactory, CancellationToken token)
@@ -156,13 +194,12 @@ public static class ImageUtils
   // decode off the UI thread creates WinRT objects there. That contends the process-wide ComWrappers
   // lock with the UI thread's own platform-view creation, and because the UI thread is STA its
   // contended wait pumps COM messages -- re-entering XAML mid-layout, which is fatal (issue #370).
-  private static byte[] DownsizedPngStream(Stream input, float maxSize)
+  private static byte[]? DownsizedPngStream(Stream input, float maxSize)
   {
-    using var data = SKData.Create(input);
-    using var original = SKBitmap.Decode(data);
+    using var original = DecodeUpright(input);
     if (original is null)
     {
-      throw new InvalidOperationException("Could not decode the image.");
+      return null;
     }
 
     var longestSide = Math.Max(original.Width, original.Height);
@@ -175,6 +212,19 @@ public static class ImageUtils
 
     return encoded.ToArray();
   }
+
+  // Skia's SkEncodedOriginToMatrix: maps the stored pixels (width x height) onto the upright image.
+  private static SKMatrix OriginMatrix(SKEncodedOrigin origin, int width, int height) => origin switch
+  {
+    SKEncodedOrigin.TopRight => new SKMatrix(-1, 0, width, 0, 1, 0, 0, 0, 1),
+    SKEncodedOrigin.BottomRight => new SKMatrix(-1, 0, width, 0, -1, height, 0, 0, 1),
+    SKEncodedOrigin.BottomLeft => new SKMatrix(1, 0, 0, 0, -1, height, 0, 0, 1),
+    SKEncodedOrigin.LeftTop => new SKMatrix(0, 1, 0, 1, 0, 0, 0, 0, 1),
+    SKEncodedOrigin.RightTop => new SKMatrix(0, -1, height, 1, 0, 0, 0, 0, 1),
+    SKEncodedOrigin.RightBottom => new SKMatrix(0, -1, height, -1, 0, width, 0, 0, 1),
+    SKEncodedOrigin.LeftBottom => new SKMatrix(0, 1, 0, -1, 0, width, 0, 0, 1),
+    _ => SKMatrix.Identity,
+  };
 
   private static Size? PngPixelSize(ReadOnlySpan<byte> bytes)
   {

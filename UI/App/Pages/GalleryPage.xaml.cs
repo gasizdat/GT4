@@ -87,7 +87,7 @@ public partial class GalleryPage : ContentPage
       switch (content)
       {
         case AttachmentInfo { Image: not null } attachment:
-          await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService));
+          await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image], _AlertService));
           break;
 
         case AttachmentInfo attachment:

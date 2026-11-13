@@ -16,16 +16,17 @@ public class ImageCache : IImageCache
   // stays a thumbnail. Built over the provider instead, it would capture the source Data and keep a
   // full-resolution photo alive for every cached thumbnail. Eager also makes entry.Size the entry's real
   // cost, and keeps one ImageSource per key: Image.Source ignores a reference-equal assignment, so a fresh
-  // instance per call would reload the image on every list-cell rebind.
-  public ImageSource GetImage(string key, Func<byte[]> dataProvider)
+  // instance per call would reload the image on every list-cell rebind. A provider's null is cached too, so
+  // an image that won't decode isn't retried on every request.
+  public ImageSource? GetImage(string key, Func<byte[]?> dataProvider)
   {
     return CacheExtensions.GetOrCreate(_Cache, key, entry =>
     {
       var bytes = dataProvider();
-      entry.Size = bytes.Length;
+      entry.Size = bytes?.Length ?? 0;
 
-      return ImageSource.FromStream(() => new MemoryStream(bytes));
-    })!;
+      return bytes is null ? null : ImageSource.FromStream(() => new MemoryStream(bytes));
+    });
   }
 
   public void Clear() => _Cache.Clear();

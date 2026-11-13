@@ -838,6 +838,17 @@ Stammbaum und haben Sie Freude daran!</value>
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Die Seiten werden geschrieben. Das kann eine Weile dauern…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>{0} benötigt einen einmaligen Download:
+{1}
+Jetzt herunterladen?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} MB)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Wird heruntergeladen. Das kann eine Weile dauern…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Personen</value>
   </data>
@@ -858,6 +869,21 @@ Stammbaum und haben Sie Freude daran!</value>
   </data>
   <data name="TitleExportChoice" xml:space="preserve">
     <value>Exportieren als…</value>
+  </data>
+  <data name="TitleEnhancePhoto" xml:space="preserve">
+    <value>Foto verbessern</value>
+  </data>
+  <data name="EnhancementUpscale" xml:space="preserve">
+    <value>Hochskalieren</value>
+  </data>
+  <data name="EnhancementColorize" xml:space="preserve">
+    <value>Kolorieren</value>
+  </data>
+  <data name="EnhancementRestore" xml:space="preserve">
+    <value>Schäden beheben</value>
+  </data>
+  <data name="HintPhotoEnhancementInProgress" xml:space="preserve">
+    <value>Foto wird verbessert…</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Eine GEDCOM-Datei in {0} importieren? Personen, die einer vorhandenen Person entsprechen, werden zusammengeführt; alle übrigen werden hinzugefügt.</value>
@@ -1013,6 +1039,21 @@ FN - Familienname</value>
   </data>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>Das Limit der Liste ist erreicht.</value>
+  </data>
+  <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
+    <value>{0} verarbeitet Fotos mit bis zu {1:N1} Megapixeln, dieses hat {2:N1}.</value>
+  </data>
+  <data name="ErrorPhotoHasNoDamage" xml:space="preserve">
+    <value>Auf diesem Foto wurden keine Schäden gefunden, daher wurde keine Kopie hinzugefügt.</value>
+  </data>
+  <data name="PhotoMarkRestore" xml:space="preserve">
+    <value>KI: restauriert</value>
+  </data>
+  <data name="PhotoMarkColorize" xml:space="preserve">
+    <value>KI: koloriert</value>
+  </data>
+  <data name="PhotoMarkUpscale_1" xml:space="preserve">
+    <value>KI: hochskaliert ×{0}</value>
   </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Familie</value>

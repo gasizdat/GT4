@@ -5,6 +5,9 @@ using GT4.UI.Utils.Comparers;
 using GT4.UI.Utils.Converters;
 using GT4.UI.Utils.Formatters;
 using GT4.UI.Utils.Settings;
+#if WINDOWS
+using GT4.UI.Utils.Platforms.Windows;
+#endif
 
 namespace GT4.UI.Utils.Extensions;
 
@@ -15,6 +18,7 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection AddUIUtils(this IServiceCollection services) =>
     services
       .AddHttpClient()
+      .AddSingleton<IModelDownloader, ModelDownloader>()
       .AddSingleton<IDateFormatter, DateFormatter>()
       .AddSingleton<INameFormatter, NameFormatter>()
       .AddSingleton<IDateSpanFormatter, DateSpanFormatter>()
@@ -33,6 +37,15 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IComparer<PersonInfo>, PersonInfoComparer>()
       .AddSingleton<IComparer<Name>, NameComparer>()
       .AddSingleton<IImageCache>(new ImageCache(CacheSizeLimit))
+#if WINDOWS
+      // Every other target leaves IPhotoEnhancement unregistered, so the enhance adorner just has
+      // nothing to offer there -- no ONNX Runtime binary exists outside this TFM to run one with.
+      .AddSingleton<IModelSessionProvider, ModelSessionProvider>()
+      .AddTransient<IMauiInitializeService, ModelCacheSweep>()
+      .AddPhotoEnhancement<UpscalePhotoEnhancement>()
+      .AddPhotoEnhancement<ColorizePhotoEnhancement>()
+      .AddPhotoEnhancement<RestorePhotoEnhancement>()
+#endif
       .AddSingleton<DataConverterResolver>(provider =>
         category => provider.GetKeyedService<IDataConverter>(category) ?? new FallbackDataConverter(category))
       .AddKeyedSingleton<IDataConverter, ImageDataConverter>(DataCategory.PersonPhoto)
@@ -60,4 +73,11 @@ public static class ServiceCollectionExtensions
       .AddKeyedSingleton<IComparer<PersonInfo>, PersonInfoComparer>(NameFormat.PersonInitials)
       .AddTransient<SettingEditorsResolver>(sp => () => sp.GetKeyedServices<ISettingEditor>(KeyedService.AnyKey))
       ;
+
+  // An enhancer with undeclared models would have them swept on every launch and re-downloaded on use.
+  private static IServiceCollection AddPhotoEnhancement<T>(this IServiceCollection services)
+    where T : class, IPhotoEnhancement =>
+    services
+      .AddSingleton<IPhotoEnhancement, T>()
+      .AddTransient<IModelDefinition, T>();
 }

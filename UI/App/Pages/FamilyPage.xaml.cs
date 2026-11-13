@@ -25,12 +25,13 @@ public partial class FamilyPage : ContentPage
   private readonly INameTypeFormatter _NameTypeFormatter;
   private readonly CreateOrUpdatePersonDialog.Factory _CreateOrUpdatePersonDialogFactory;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly PhotoEnhancer _PhotoEnhancer;
   private readonly FilteredObservableCollection<PersonInfo> _Persons = new();
   private bool _PersonsLoaded;
   private Name? _FamilyName = null;
   private ProjectInfo? _LastProjectInfo;
   private PhotoInfo[] _Photos = [];
-  private AttachmentInfo[] _Attachments = [];
+  private AttachmentItem[] _AttachmentItems = [];
 
   public FamilyPage(
     ICancellationTokenProvider cancellationTokenProvider,
@@ -43,7 +44,8 @@ public partial class FamilyPage : ContentPage
     IBiologicalSexFormatter biologicalSexFormatter,
     INameTypeFormatter nameTypeFormatter,
     CreateOrUpdatePersonDialog.Factory createOrUpdatePersonDialogFactory,
-    DataConverterResolver dataConverterResolver
+    DataConverterResolver dataConverterResolver,
+    PhotoEnhancer photoEnhancer
     )
   {
     _CancellationTokenProvider = cancellationTokenProvider;
@@ -54,6 +56,7 @@ public partial class FamilyPage : ContentPage
     _NameTypeFormatter = nameTypeFormatter;
     _CreateOrUpdatePersonDialogFactory = createOrUpdatePersonDialogFactory;
     _DataConverterResolver = dataConverterResolver;
+    _PhotoEnhancer = photoEnhancer;
 
     _Persons.Filter = (_, person) => FilterView.Matches(person);
 
@@ -131,7 +134,8 @@ public partial class FamilyPage : ContentPage
           _Persons.Clear();
           _Persons.AddRange(persons);
           _Photos = photos;
-          _Attachments = attachments;
+          _AttachmentItems = [.. attachments.Select(attachment =>
+            new AttachmentItem(attachment, _DataConverterResolver, _CancellationTokenProvider, _AlertService))];
           FilterView.ResetFilterData();
           this.RefreshView();
         }, _AlertService);
@@ -151,9 +155,9 @@ public partial class FamilyPage : ContentPage
 
   public bool ShowPhotos => _Photos.Length != 0;
 
-  public AttachmentInfo[] Attachments => _Attachments;
+  public AttachmentItem[] AttachmentItems => _AttachmentItems;
 
-  public bool ShowAttachments => _Attachments.Length != 0;
+  public bool ShowAttachments => _AttachmentItems.Length != 0;
 
   public string RemoveFamilyToolbarItemName =>
     string.Format(UIStrings.MenuItemNameRemove_1, _FamilyName?.Value ?? string.Empty);
@@ -203,7 +207,7 @@ public partial class FamilyPage : ContentPage
   {
     if (attachment.Image is not null)
     {
-      await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService));
+      await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image], _AlertService));
       return;
     }
 
@@ -282,7 +286,8 @@ public partial class FamilyPage : ContentPage
           _NameTypeFormatter,
           _AlertService,
           Navigation,
-          _DataConverterResolver);
+          _DataConverterResolver,
+          _PhotoEnhancer);
         Refresh();
         break;
 

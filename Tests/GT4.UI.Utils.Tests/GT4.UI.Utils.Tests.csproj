@@ -29,4 +29,12 @@
         <ProjectReference Include="..\..\UI\Utils\GT4.UI.Utils.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Compile Include="..\GT4.Core.Project.Tests\DiskFileSystem.cs" Link="DiskFileSystem.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Fixtures\*.onnx" />
+    </ItemGroup>
+
 </Project>

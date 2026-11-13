@@ -71,7 +71,31 @@
                             Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Source="{Binding Content.Source}"
-                            Style="{StaticResource PhotoPreviewStyle}" />
+                            Style="{StaticResource PhotoPreviewStyle}">
+                          <Image.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding DialogCommand, Source={x:Reference Root}}">
+                              <TapGestureRecognizer.CommandParameter>
+                                <components:AdornerCommandParameter
+                                    CommandName="PreviewMediaCommand"
+                                    Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                              </TapGestureRecognizer.CommandParameter>
+                            </TapGestureRecognizer>
+                          </Image.GestureRecognizers>
+                        </Image>
+
+                        <Button
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
+                            Style="{StaticResource EnhanceAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EnhancePhotoCommand"
+                                Element="{Binding Source={x:Reference PersonPhoto}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
 
                         <Button
                             Grid.Row="0"
@@ -127,8 +151,11 @@
 
                       </Grid>
 
-                      <HorizontalStackLayout>
+                      <Grid
+                          ColumnDefinitions="Auto, *"
+                          WidthRequest="{StaticResource PhotoWidth}">
                         <Button
+                            Grid.Column="0"
                             Command="{Binding DialogCommand, Source={x:Reference Root}}"
                             Style="{StaticResource CaptionAdorner}">
 
@@ -140,10 +167,11 @@
                         </Button>
 
                         <Label
+                            Grid.Column="1"
                             Style="{StaticResource FieldValue}"
                             Text="{Binding Caption}"
                             VerticalOptions="Center" />
-                      </HorizontalStackLayout>
+                      </Grid>
                     </VerticalStackLayout>
                   </DataTemplate>
                 </CollectionView.ItemTemplate>
@@ -184,41 +212,59 @@
                     <Grid
                         x:Name="PersonAttachment"
                         Padding="{StaticResource CollectionItemsVerticalPadding}"
-                        ColumnDefinitions="*, Auto, Auto, Auto, Auto"
+                        ColumnDefinitions="Auto, *, Auto, Auto, Auto, Auto, Auto"
                         RowDefinitions="Auto, Auto"
                         Style="{StaticResource HoverItem}">
 
+                      <Image
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="0"
+                          Margin="{Thickness Right={StaticResource PageContentSpacing}}"
+                          IsVisible="{Binding HasThumbnail}"
+                          Source="{Binding Thumbnail}"
+                          Style="{StaticResource PhotoThumbStyle}">
+                        <Image.GestureRecognizers>
+                          <TapGestureRecognizer Command="{Binding DialogCommand, Source={x:Reference Root}}">
+                            <TapGestureRecognizer.CommandParameter>
+                              <components:AdornerCommandParameter
+                                  CommandName="PreviewMediaCommand"
+                                  Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                            </TapGestureRecognizer.CommandParameter>
+                          </TapGestureRecognizer>
+                        </Image.GestureRecognizers>
+                      </Image>
+
                       <Label
                           Grid.Row="0"
-                          Grid.Column="0"
+                          Grid.Column="1"
                           Style="{StaticResource FieldValue}"
                           Text="{Binding Content.DisplayName}"
                           VerticalOptions="Center" />
 
-                      <HorizontalStackLayout
-                          Grid.Row="1"
-                          Grid.Column="0">
+                      <ContentView
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="2"
+                          IsVisible="{Binding CanEnhance, Source={x:Reference Root}}"
+                          VerticalOptions="Center">
                         <Button
                             Command="{Binding DialogCommand, Source={x:Reference Root}}"
-                            Style="{StaticResource CaptionAdorner}">
+                            IsVisible="{Binding Content.IsImage}"
+                            Style="{StaticResource EnhanceAdorner}">
 
                           <Button.CommandParameter>
                             <components:AdornerCommandParameter
-                                CommandName="EditCaptionCommand"
+                                CommandName="EnhanceAttachmentCommand"
                                 Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
                           </Button.CommandParameter>
                         </Button>
-
-                        <Label
-                            Style="{StaticResource FieldValue}"
-                            Text="{Binding Caption}"
-                            VerticalOptions="Center" />
-                      </HorizontalStackLayout>
+                      </ContentView>
 
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="1"
+                          Grid.Column="3"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource UpAdorner}"
                           VerticalOptions="Center">
@@ -233,7 +279,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="2"
+                          Grid.Column="4"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DownAdorner}"
                           VerticalOptions="Center">
@@ -248,7 +294,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="3"
+                          Grid.Column="5"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource EditAdorner}"
                           VerticalOptions="Center">
@@ -263,7 +309,7 @@
                       <Button
                           Grid.Row="0"
                           Grid.RowSpan="2"
-                          Grid.Column="4"
+                          Grid.Column="6"
                           Command="{Binding DialogCommand, Source={x:Reference Root}}"
                           Style="{StaticResource DeleteAdorner}"
                           VerticalOptions="Center">
@@ -274,6 +320,29 @@
                               Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
                         </Button.CommandParameter>
                       </Button>
+
+                      <Grid
+                          Grid.Row="1"
+                          Grid.Column="1"
+                          ColumnDefinitions="Auto, *">
+                        <Button
+                            Grid.Column="0"
+                            Command="{Binding DialogCommand, Source={x:Reference Root}}"
+                            Style="{StaticResource CaptionAdorner}">
+
+                          <Button.CommandParameter>
+                            <components:AdornerCommandParameter
+                                CommandName="EditCaptionCommand"
+                                Element="{Binding Source={x:Reference PersonAttachment}, Path=BindingContext}" />
+                          </Button.CommandParameter>
+                        </Button>
+
+                        <Label
+                            Grid.Column="1"
+                            Style="{StaticResource FieldValue}"
+                            Text="{Binding Caption}"
+                            VerticalOptions="Center" />
+                      </Grid>
 
                     </Grid>
                   </DataTemplate>

@@ -838,6 +838,17 @@
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Запись страниц. Это может занять некоторое время…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>Для «{0}» нужна однократная загрузка:
+{1}
+Скачать сейчас?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} МБ)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Загрузка. Это может занять некоторое время…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Персоны</value>
   </data>
@@ -858,6 +869,21 @@
   </data>
   <data name="TitleExportChoice" xml:space="preserve">
     <value>Экспортировать как…</value>
+  </data>
+  <data name="TitleEnhancePhoto" xml:space="preserve">
+    <value>Улучшить фото</value>
+  </data>
+  <data name="EnhancementUpscale" xml:space="preserve">
+    <value>Увеличить</value>
+  </data>
+  <data name="EnhancementColorize" xml:space="preserve">
+    <value>Раскрасить</value>
+  </data>
+  <data name="EnhancementRestore" xml:space="preserve">
+    <value>Устранить повреждения</value>
+  </data>
+  <data name="HintPhotoEnhancementInProgress" xml:space="preserve">
+    <value>Улучшение фото…</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>Импортировать файл GEDCOM в {0}? Совпадающие люди будут объединены, остальные добавлены.</value>
@@ -1013,6 +1039,21 @@ FN - род</value>
   </data>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>Достигнута граница списка</value>
+  </data>
+  <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
+    <value>«{0}» работает с фото до {1:N1} Мп, а в этом — {2:N1} Мп.</value>
+  </data>
+  <data name="ErrorPhotoHasNoDamage" xml:space="preserve">
+    <value>На этом фото не найдено повреждений, поэтому копия не добавлена.</value>
+  </data>
+  <data name="PhotoMarkRestore" xml:space="preserve">
+    <value>ИИ: восстановлено</value>
+  </data>
+  <data name="PhotoMarkColorize" xml:space="preserve">
+    <value>ИИ: раскрашено</value>
+  </data>
+  <data name="PhotoMarkUpscale_1" xml:space="preserve">
+    <value>ИИ: увеличено ×{0}</value>
   </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Род</value>

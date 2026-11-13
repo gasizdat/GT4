@@ -61,6 +61,17 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} needs a one-time download:
+///{1}
+///Download now?.
+        /// </summary>
+        public static string AlertDownloadModelsConfirm_2 {
+            get {
+                return ResourceManager.GetString("AlertDownloadModelsConfirm_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The HTML export includes everyone in the project, living people too, with every biography, photo and attachment. Export?.
         /// </summary>
         public static string AlertExportHtmlConfirm {
@@ -800,11 +811,56 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Colorize.
+        /// </summary>
+        public static string EnhancementColorize {
+            get {
+                return ResourceManager.GetString("EnhancementColorize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restore damage.
+        /// </summary>
+        public static string EnhancementRestore {
+            get {
+                return ResourceManager.GetString("EnhancementRestore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Upscale.
+        /// </summary>
+        public static string EnhancementUpscale {
+            get {
+                return ResourceManager.GetString("EnhancementUpscale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to At least the following persons share name {0}: {1}.
         /// </summary>
         public static string ErrorNameIsShared_2 {
             get {
                 return ResourceManager.GetString("ErrorNameIsShared_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No damage was found in this photo, so no copy was added..
+        /// </summary>
+        public static string ErrorPhotoHasNoDamage {
+            get {
+                return ResourceManager.GetString("ErrorPhotoHasNoDamage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} works on photos of up to {1:N1} megapixels, and this one has {2:N1}..
+        /// </summary>
+        public static string ErrorPhotoTooLarge_3 {
+            get {
+                return ResourceManager.GetString("ErrorPhotoTooLarge_3", resourceCulture);
             }
         }
         
@@ -2557,6 +2613,15 @@ namespace GT4.UI.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Downloading. This may take a while….
+        /// </summary>
+        public static string HintModelDownloadInProgress {
+            get {
+                return ResourceManager.GetString("HintModelDownloadInProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Name contains… (* and ? wildcards supported).
         /// </summary>
         public static string HintNameFilterWildcard {
@@ -2571,6 +2636,15 @@ namespace GT4.UI.Resources {
         public static string HintNamesPage {
             get {
                 return ResourceManager.GetString("HintNamesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enhancing the photo….
+        /// </summary>
+        public static string HintPhotoEnhancementInProgress {
+            get {
+                return ResourceManager.GetString("HintPhotoEnhancementInProgress", resourceCulture);
             }
         }
         
@@ -2985,6 +3059,15 @@ namespace GT4.UI.Resources {
         public static string MenuItemNameUnmarkAsMainPerson_1 {
             get {
                 return ResourceManager.GetString("MenuItemNameUnmarkAsMainPerson_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to • {0} ({1}, {2:N0} MB).
+        /// </summary>
+        public static string ModelDownloadEntry_3 {
+            get {
+                return ResourceManager.GetString("ModelDownloadEntry_3", resourceCulture);
             }
         }
         
@@ -3426,6 +3509,33 @@ namespace GT4.UI.Resources {
         public static string PersonSinceBirthDay_1 {
             get {
                 return ResourceManager.GetString("PersonSinceBirthDay_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AI: colorized.
+        /// </summary>
+        public static string PhotoMarkColorize {
+            get {
+                return ResourceManager.GetString("PhotoMarkColorize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AI: restored.
+        /// </summary>
+        public static string PhotoMarkRestore {
+            get {
+                return ResourceManager.GetString("PhotoMarkRestore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AI: upscaled ×{0}.
+        /// </summary>
+        public static string PhotoMarkUpscale_1 {
+            get {
+                return ResourceManager.GetString("PhotoMarkUpscale_1", resourceCulture);
             }
         }
         
@@ -4392,6 +4502,15 @@ namespace GT4.UI.Resources {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Enhance photo.
+        /// </summary>
+        public static string TitleEnhancePhoto {
+            get {
+                return ResourceManager.GetString("TitleEnhancePhoto", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Export as….
         /// </summary>

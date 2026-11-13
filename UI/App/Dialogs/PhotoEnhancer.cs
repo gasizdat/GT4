@@ -1,0 +1,135 @@
+using GT4.Core.Project.Dto;
+using GT4.Core.Project.Extensions;
+using GT4.UI.Abstraction;
+using GT4.UI.Items;
+using GT4.UI.Resources;
+using GT4.UI.Utils.Converters;
+using GT4.UI.Utils.Extensions;
+
+namespace GT4.UI.Dialogs;
+
+public class PhotoEnhancer
+{
+  private readonly IEnumerable<IPhotoEnhancement> _Enhancements;
+  private readonly IModelDownloader _ModelDownloader;
+  private readonly IAlertService _AlertService;
+  private readonly DataConverterResolver _DataConverterResolver;
+
+  public PhotoEnhancer(
+    IEnumerable<IPhotoEnhancement> enhancements,
+    IModelDownloader modelDownloader,
+    IAlertService alertService,
+    DataConverterResolver dataConverterResolver)
+  {
+    _Enhancements = enhancements;
+    _ModelDownloader = modelDownloader;
+    _AlertService = alertService;
+    _DataConverterResolver = dataConverterResolver;
+  }
+
+  public bool CanEnhance => _Enhancements.Any();
+
+  public async Task<Data?> EnhanceAsync(Page page, PersonDataItem media)
+  {
+    var names = _Enhancements.Select(enhancement => enhancement.DisplayName).ToArray();
+    var choice = await ChooseEnhancementAsync(page, names);
+    var enhancement = _Enhancements.FirstOrDefault(enhancement => enhancement.DisplayName == choice);
+    if (enhancement is null || !await DownloadMissingModelsAsync(page.Navigation, enhancement))
+    {
+      return null;
+    }
+
+    var category = media.Info.Category;
+    var converterCategory = category.IsAttachment() ? category : category.AsTaggedPhoto();
+    var converter = _DataConverterResolver(converterCategory);
+    var dialog = new ProgressDialog(enhancement.DisplayName, enhancement.DisplayName, UIStrings.HintPhotoEnhancementInProgress, _AlertService);
+    await page.Navigation.PushModalAsync(dialog);
+    try
+    {
+      // An unsaved caption edit carries over to the copy.
+      var current = await media.ToDataAsync();
+      var source = await converter.ToObjectAsync(current, dialog.Token);
+      var attachment = source as AttachmentInfo;
+      var photo = (attachment?.Image is { } image ? new PhotoInfo(image, attachment.Title) : source as PhotoInfo) ??
+        throw new InvalidOperationException($"The {category} item has no image to enhance.");
+      var enhanced = await Task.Run(() => enhancement.EnhanceAsync(photo, dialog.Token));
+      if (attachment is not null)
+      {
+        var copy = attachment with { Title = enhanced.Caption, Image = enhanced.Source };
+        return await converter.FromObjectAsync(copy, dialog.Token);
+      }
+
+      // A new photo, so it must not carry the source's stored Id.
+      var data = await converter.FromObjectAsync(enhanced, dialog.Token);
+      // The copy's caption mark makes it Tagged, but person or family is the source's, not the converter's.
+      var copyCategory = category.AsAdditionalPhoto().AsTaggedPhoto();
+      // The converter labels everything it encodes image/bmp; unlabelled, the JPEG bytes are sniffed instead.
+      return data! with { MimeType = null, Category = copyCategory };
+    }
+    catch (OperationCanceledException)
+    {
+      return null;
+    }
+    finally
+    {
+      await page.Navigation.PopModalAsync();
+    }
+  }
+
+  // Called as a dialog that can enhance completes, not after each enhancement, so the photos enhanced in one
+  // dialog pay each model's load once.
+  public void ReleaseModels()
+  {
+    foreach (var enhancement in _Enhancements)
+    {
+      enhancement.ReleaseModels();
+    }
+  }
+
+  // Virtual only so a device test can answer the sheet, which a test cannot drive.
+  protected virtual Task<string> ChooseEnhancementAsync(Page page, string[] names) =>
+    page.DisplayActionSheetAsync(UIStrings.TitleEnhancePhoto, UIStrings.BtnNameCancel, null, names);
+
+  private async Task<bool> DownloadMissingModelsAsync(INavigation navigation, IPhotoEnhancement enhancement)
+  {
+    const double BytesPerMegabyte = 1024 * 1024;
+
+    var missing = enhancement.Models
+      .Where(model => !_ModelDownloader.IsDownloaded(model))
+      .ToArray();
+    if (missing.Length == 0)
+    {
+      return true;
+    }
+
+    var entries = missing.Select(model =>
+      string.Format(UIStrings.ModelDownloadEntry_3, model.DisplayName, model.License, model.Size / BytesPerMegabyte));
+    var list = string.Join(Environment.NewLine, entries);
+    var confirmationText = string.Format(UIStrings.AlertDownloadModelsConfirm_2, enhancement.DisplayName, list);
+    if (!await _AlertService.ShowConfirmationAsync(confirmationText))
+    {
+      return false;
+    }
+
+    var names = missing.Select(model => model.DisplayName);
+    var subject = string.Join(", ", names);
+    var dialog = new ProgressDialog(enhancement.DisplayName, subject, UIStrings.HintModelDownloadInProgress, _AlertService);
+    await navigation.PushModalAsync(dialog);
+    try
+    {
+      foreach (var model in missing)
+      {
+        await _ModelDownloader.EnsureModelAsync(model, dialog.Token);
+      }
+      return true;
+    }
+    catch (OperationCanceledException)
+    {
+      return false;
+    }
+    finally
+    {
+      await navigation.PopModalAsync();
+    }
+  }
+}

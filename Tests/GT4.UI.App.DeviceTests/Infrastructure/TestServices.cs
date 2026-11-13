@@ -42,6 +42,8 @@ internal sealed class TestServices
   public Mock<IMainPersonStore> MainPersonStore { get; } = new();
   public Mock<IFamilyTreeArrangementStore> ArrangementStore { get; } = new();
   public Mock<IFamilyTreeHiddenPersonsStore> HiddenPersonsStore { get; } = new();
+  // Stands in for the real downloader, which would reach the network and the developer's own model cache.
+  public Mock<IModelDownloader> ModelDownloader { get; } = new();
   // Stands in for the app-config-backed setting, which would read and write the developer's own
   // settings file; it starts at the default sweep.
   public Mock<ISettingEditor> FanChartSweepSetting { get; } = new();
@@ -182,6 +184,7 @@ internal sealed class TestServices
     services.AddSingleton(MainPersonStore.Object);
     services.AddSingleton(ArrangementStore.Object);
     services.AddSingleton(HiddenPersonsStore.Object);
+    services.AddSingleton(ModelDownloader.Object);
     services.AddSingleton<TestableNamesPage>();
     services.AddSingleton<TestableGalleryPage>();
     services.AddSingleton<TestableFamilyPage>();

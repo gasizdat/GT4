@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Dev-time checkpoint-to-ONNX converter for #506's restore models, rebuilding each
+         published file from the upstream weights at a pinned revision. Not referenced by any
+         shipped project or CI filter: it exists to be run by hand, by whoever publishes a model. -->
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Onnxify" />
+    <PackageReference Include="Onnxify.TorchSharp" />
+    <PackageReference Include="TorchSharp" />
+    <PackageReference Include="TorchSharp-cpu" />
+    <PackageReference Include="TorchSharp.PyBridge" />
+  </ItemGroup>
+
+</Project>

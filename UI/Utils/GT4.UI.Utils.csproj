@@ -22,6 +22,8 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
 		<PackageReference Include="Microsoft.Extensions.Http" />
+		<!-- Windows-only: ships native ONNX Runtime binaries, which android/ios/maccatalyst don't need. -->
+		<PackageReference Include="Microsoft.ML.OnnxRuntime" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
 		<PackageReference Include="Microsoft.Maui.Controls" />
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" />
 		<PackageReference Include="SkiaSharp" />

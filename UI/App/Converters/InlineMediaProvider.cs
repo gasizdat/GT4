@@ -62,7 +62,7 @@ public sealed class InlineMediaProvider
     var source = content switch
     {
       PhotoInfo photo => photo.Source,
-      AttachmentInfo attachment => attachment.Image?.Source,
+      AttachmentInfo attachment => attachment.Image,
       _ => null
     };
 

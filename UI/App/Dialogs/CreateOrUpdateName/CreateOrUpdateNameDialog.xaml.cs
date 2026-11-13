@@ -23,6 +23,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   private readonly ICancellationTokenProvider _CancellationTokenProvider;
   private readonly IAlertService _AlertService;
   private readonly DataConverterResolver _DataConverterResolver;
+  private readonly PhotoEnhancer _PhotoEnhancer;
   private readonly TaskCompletionSource<Result?> _Info = new(null);
   private readonly string _DialogButtonName;
   private readonly ICommand _DialogCommand;
@@ -59,11 +60,13 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
-    DataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver,
+    PhotoEnhancer photoEnhancer)
   {
     _AlertService = alertService;
     _CancellationTokenProvider = cancellationTokenProvider;
     _DataConverterResolver = dataConverterResolver;
+    _PhotoEnhancer = photoEnhancer;
     var nameTypeName = nameTypeFormatter.ToString(nameType);
     _DialogButtonName = string.Format(UIStrings.BtnNameCreateName_1, nameTypeName);
     _DialogCommand = new SafeCommand(OnCreateFamilyAsync, alertService);
@@ -101,8 +104,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     IAlertService alertService,
     ICancellationTokenProvider cancellationTokenProvider,
     DataConverterResolver dataConverterResolver,
+    PhotoEnhancer photoEnhancer,
     FamilyFullInfo? family = null)
-    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver)
+    : this(name.Type, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, photoEnhancer)
   {
     var nameTypeName = nameTypeFormatter.ToString(name.Type);
     _DialogButtonName = string.Format(UIStrings.BtnNameUpdateName_1, nameTypeName);
@@ -134,6 +138,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
   public bool ShowFamilyMedia => _NameType == NameType.FamilyName;
 
   public ICollection<PersonDataItem> Photos => _Photos;
+
+  public bool CanEnhance => _PhotoEnhancer.CanEnhance;
 
   public ICollection<PersonDataItem> Attachments => _Attachments;
 
@@ -309,13 +315,23 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     return true;
   }
 
-  private void Cancel() => _Info.TrySetResult(null);
+  private void Cancel() => Complete(null);
+
+  private void Complete(Result? result)
+  {
+    // A person's own name dialogs open inside the person dialog and can't enhance, so they leave its models loaded.
+    if (ShowFamilyMedia)
+    {
+      _PhotoEnhancer.ReleaseModels();
+    }
+    _Info.TrySetResult(result);
+  }
 
   private async Task OnCreateFamilyAsync()
   {
     if (NotReady)
     {
-      _Info.TrySetResult(null);
+      Cancel();
       return;
     }
 
@@ -332,7 +348,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
     var attachments = await PersonDataItem.ToDataAsync(_Attachments);
-    _Info.TrySetResult(new(name, maleName, femaleName, allPhotos, attachments));
+    var result = new Result(name, maleName, femaleName, allPhotos, attachments);
+    Complete(result);
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
@@ -376,6 +393,18 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
 
     IsModified = true;
+  }
+
+  private async Task OnEnhanceFamilyMediaAsync(ObservableCollection<PersonDataItem> media, PersonDataItem source)
+  {
+    var copy = await _PhotoEnhancer.EnhanceAsync(this, source);
+    if (copy is not null)
+    {
+      var item = GetFamilyData(copy, copy.Category);
+      var index = media.IndexOf(source);
+      media.Insert(index + 1, item);
+      IsModified = true;
+    }
   }
 
   private async Task OnAddOrUpdateFamilyAttachmentAsync(PersonDataItem? attachment)
@@ -455,6 +484,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "EditFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
         await OnAddOrUpdateFamilyPhotoAsync(photo);
         break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhanceFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
+        await OnEnhanceFamilyMediaAsync(_Photos, photo);
+        break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveFamilyPhotoCommand" && adorner.Element is PersonDataItem photo:
         _Photos.Remove(photo);
         IsModified = true;
@@ -467,6 +499,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "EditFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         await OnAddOrUpdateFamilyAttachmentAsync(attachment);
+        break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "EnhanceFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
+        await OnEnhanceFamilyMediaAsync(_Attachments, attachment);
         break;
       case AdornerCommandParameter adorner when adorner.CommandName == "RemoveFamilyAttachmentCommand" && adorner.Element is PersonDataItem attachment:
         _Attachments.Remove(attachment);
@@ -481,6 +516,9 @@ public partial class CreateOrUpdateNameDialog : ContentPage
       case AdornerCommandParameter adorner when adorner.CommandName == "EditCaptionCommand" && adorner.Element is PersonDataItem item:
         await OnEditCaptionAsync(item);
         break;
+      case AdornerCommandParameter adorner when adorner.CommandName == "PreviewMediaCommand" && adorner.Element is PersonDataItem { Image: { } image }:
+        await Navigation.PushModalAsync(new PhotoViewerDialog([image], _AlertService));
+        break;
     }
   }
 
@@ -493,7 +531,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     INameTypeFormatter nameTypeFormatter,
     IAlertService alertService,
     INavigation navigation,
-    DataConverterResolver dataConverterResolver)
+    DataConverterResolver dataConverterResolver,
+    PhotoEnhancer photoEnhancer)
   {
     async Task<NamesGroup> GetNameWithSubnames()
     {
@@ -542,7 +581,7 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     }
 
     var dialog = new CreateOrUpdateNameDialog(
-      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, family)
+      names.FirstName, names.MaleName, names.FemaleName, nameTypeFormatter, alertService, cancellationTokenProvider, dataConverterResolver, photoEnhancer, family)
     {
       FocusGenericName = focusGenericName,
       FocusMaleName = !focusGenericName && name.Type.HasFlag(NameType.MaleDeclension),

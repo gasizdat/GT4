@@ -838,6 +838,17 @@
   <data name="HintHtmlExportInProgress" xml:space="preserve">
     <value>Escribiendo las páginas. Esto puede tardar un rato…</value>
   </data>
+  <data name="AlertDownloadModelsConfirm_2" xml:space="preserve">
+    <value>{0} necesita una descarga única:
+{1}
+¿Descargar ahora?</value>
+  </data>
+  <data name="ModelDownloadEntry_3" xml:space="preserve">
+    <value>• {0} ({1}, {2:N0} MB)</value>
+  </data>
+  <data name="HintModelDownloadInProgress" xml:space="preserve">
+    <value>Descargando. Esto puede tardar un rato…</value>
+  </data>
   <data name="LblPersons" xml:space="preserve">
     <value>Personas</value>
   </data>
@@ -858,6 +869,21 @@
   </data>
   <data name="TitleExportChoice" xml:space="preserve">
     <value>Exportar como…</value>
+  </data>
+  <data name="TitleEnhancePhoto" xml:space="preserve">
+    <value>Mejorar la foto</value>
+  </data>
+  <data name="EnhancementUpscale" xml:space="preserve">
+    <value>Ampliar</value>
+  </data>
+  <data name="EnhancementColorize" xml:space="preserve">
+    <value>Colorear</value>
+  </data>
+  <data name="EnhancementRestore" xml:space="preserve">
+    <value>Reparar daños</value>
+  </data>
+  <data name="HintPhotoEnhancementInProgress" xml:space="preserve">
+    <value>Mejorando la foto…</value>
   </data>
   <data name="AlertImportGedcomConfirm_1" xml:space="preserve">
     <value>¿Importar un archivo GEDCOM en {0}? Las personas que coincidan con una existente se fusionan; el resto se añaden.</value>
@@ -1013,6 +1039,21 @@ FN - apellido familiar</value>
   </data>
   <data name="ErrorTheBoundIsReached" xml:space="preserve">
     <value>Se ha alcanzado el límite de la colección.</value>
+  </data>
+  <data name="ErrorPhotoTooLarge_3" xml:space="preserve">
+    <value>{0} funciona con fotos de hasta {1:N1} megapíxeles, y esta tiene {2:N1}.</value>
+  </data>
+  <data name="ErrorPhotoHasNoDamage" xml:space="preserve">
+    <value>No se encontraron daños en esta foto, así que no se añadió ninguna copia.</value>
+  </data>
+  <data name="PhotoMarkRestore" xml:space="preserve">
+    <value>IA: restaurada</value>
+  </data>
+  <data name="PhotoMarkColorize" xml:space="preserve">
+    <value>IA: coloreada</value>
+  </data>
+  <data name="PhotoMarkUpscale_1" xml:space="preserve">
+    <value>IA: ampliada ×{0}</value>
   </data>
   <data name="NameFamily" xml:space="preserve">
     <value>Familia</value>

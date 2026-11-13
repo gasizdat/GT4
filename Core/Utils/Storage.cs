@@ -13,4 +13,7 @@ internal class Storage : IStorage
 
   public DirectoryDescription AppConfig =>
     new DirectoryDescription(Root: Environment.SpecialFolder.ApplicationData, Path: [AppId, ".config"]);
+
+  public DirectoryDescription Models =>
+    new DirectoryDescription(Root: Environment.SpecialFolder.ApplicationData, Path: [AppId, ".models"]);
 }
