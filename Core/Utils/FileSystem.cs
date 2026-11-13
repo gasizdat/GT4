@@ -74,7 +74,8 @@ internal class FileSystem : IFileSystem
   {
     var targetPath = ToPath(to);
     CreatePath(targetPath);
-    File.Move(ToPath(from), targetPath, overwrite: true);
+    var sourcePath = ToPath(from);
+    File.Move(sourcePath, targetPath, overwrite: true);
   }
 
   public bool FileExists(FileDescription FileExists) => File.Exists(ToPath(FileExists));
