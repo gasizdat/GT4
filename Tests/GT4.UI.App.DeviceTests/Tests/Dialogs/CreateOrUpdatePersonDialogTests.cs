@@ -884,10 +884,6 @@ public class CreateOrUpdatePersonDialogTests
     Assert.Null(copy.Image.Caption);
   }
 
-  // Wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
-  private static Data ScanAttachment(int id) =>
-    new(id, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.PersonAttachment);
-
   private static async Task<Size?> ThumbnailSizeAsync(PersonDataItem item)
   {
     var thumbnail = await WaitForAsync(() => item.Thumbnail, source => source is not null, "The thumbnail never resolved.");
@@ -906,7 +902,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task An_image_attachment_row_shows_a_downsized_thumbnail_and_a_document_row_none()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), Attachment(21)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment), Attachment(21)] };
     var dialog = await CreateDialogAsync(services, person);
     await using var window = await WindowHost.AttachAsync(dialog);
     var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
@@ -949,7 +945,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task Tapping_an_attachments_thumbnail_opens_its_full_size_image_alone_in_the_viewer()
   {
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), ScanAttachment(22)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment), TestImages.ScanAttachment(22, DataCategory.PersonAttachment)] };
     var dialog = await CreateDialogAsync(new TestServices(), person);
     await using var window = await WindowHost.AttachAsync(dialog);
     var scan = dialog.Attachments.Last();
@@ -967,7 +963,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task Only_an_attachments_picture_opens_the_viewer_and_a_documents_opens_nothing()
   {
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), Attachment(21)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment), Attachment(21)] };
     var dialog = await CreateDialogAsync(new TestServices(), person);
     await using var window = await WindowHost.AttachAsync(dialog);
     var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
@@ -987,7 +983,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task An_enhanced_attachment_copy_shows_a_downsized_thumbnail()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment)] };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);

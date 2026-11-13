@@ -523,14 +523,11 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
-  // The scan is wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
   private static async Task<TestableFamilyPage> ShowScanAndDeedAsync(TestServices services)
   {
     var familyName = N(5, "Ivanov", NameType.FamilyName);
-    var scan = new Data(
-      3, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.FamilyAttachment);
-    var deed = new Data(
-      4, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", DataCategory.FamilyAttachment);
+    var scan = TestImages.ScanAttachment(3, DataCategory.FamilyAttachment);
+    var deed = TestImages.DeedAttachment(4, DataCategory.FamilyAttachment);
     services.PersonManager
       .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);

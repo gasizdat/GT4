@@ -1,3 +1,5 @@
+using GT4.Core.Gedcom;
+using GT4.Core.Project.Dto;
 using SkiaSharp;
 
 namespace GT4.UI.DeviceTests;
@@ -11,6 +13,13 @@ internal static class TestImages
     using var data = bitmap.Encode(SKEncodedImageFormat.Png, 100);
     return data.ToArray();
   }
+
+  // Wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
+  public static Data ScanAttachment(int id, DataCategory category) =>
+    new(id, GedcomPhotoResidue.EncodeAttachment(Png(300, 200), "scan.png"), "image/png", category);
+
+  public static Data DeedAttachment(int id, DataCategory category) =>
+    new(id, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", category);
 
   /// <summary>
   /// A 1x1 RGBA PNG, byte-for-byte valid: correct chunk lengths and CRC32 on every chunk. Any test that
