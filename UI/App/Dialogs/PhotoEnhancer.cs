@@ -49,12 +49,12 @@ public class PhotoEnhancer
       var current = await media.ToDataAsync();
       var source = await converter.ToObjectAsync(current, dialog.Token);
       var attachment = source as AttachmentInfo;
-      var photo = (attachment?.Image is not null ? attachment.Image with { Caption = attachment.Title } : source as PhotoInfo) ??
+      var photo = (attachment?.Image is { } image ? new PhotoInfo(image, attachment.Title) : source as PhotoInfo) ??
         throw new InvalidOperationException($"The {category} item has no image to enhance.");
       var enhanced = await Task.Run(() => enhancement.EnhanceAsync(photo, dialog.Token));
       if (attachment is not null)
       {
-        var copy = attachment with { Title = enhanced.Caption, Image = enhanced with { Caption = null } };
+        var copy = attachment with { Title = enhanced.Caption, Image = enhanced.Source };
         return await converter.FromObjectAsync(copy, dialog.Token);
       }
 

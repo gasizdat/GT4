@@ -50,7 +50,7 @@ public class AttachmentDataConverterTests
 
     var info = Assert.IsType<AttachmentInfo>(result);
     Assert.NotNull(info.Image);
-    Assert.Equal([9, 8, 7], await PhotoBytes.ReadAsync(info.Image.Source));
+    Assert.Equal([9, 8, 7], await PhotoBytes.ReadAsync(info.Image));
   }
 
   [Fact]
@@ -114,7 +114,7 @@ public class AttachmentDataConverterTests
   {
     var jpeg = Jpeg();
     var source = new Data(5, GedcomPhotoResidue.EncodeAttachment(TestImages.ValidPng, "scan.png"), "image/png", category);
-    var image = new PhotoInfo(ImageSource.FromStream(() => new MemoryStream(jpeg)), "Not the title");
+    var image = ImageSource.FromStream(() => new MemoryStream(jpeg));
     var copy = new AttachmentInfo("scan.png", "Deed (Doubled)", source, image);
 
     var result = await Converter(category).FromObjectAsync(copy, CancellationToken.None);

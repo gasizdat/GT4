@@ -834,47 +834,6 @@ public class CreateOrUpdatePersonDialogTests
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
-  private sealed class RecordingConverter(IDataConverter inner) : IDataConverter
-  {
-    public object? Encoded { get; private set; }
-
-    public Task<Data?> FromObjectAsync(object? data, CancellationToken token)
-    {
-      Encoded = data;
-      return inner.FromObjectAsync(data, token);
-    }
-
-    public Task<object?> ToObjectAsync(Data? data, CancellationToken token) => inner.ToObjectAsync(data, token);
-  }
-
-  // The converter writes only Title, so a caption left on the image would be a second, ignored copy of it.
-  [Fact]
-  public async Task EnhanceAttachmentCommand_keeps_the_marked_title_off_the_copys_image()
-  {
-    var services = new TestServices();
-    var resolver = services.Provider.GetRequiredService<DataConverterResolver>();
-    var recorder = new RecordingConverter(resolver(DataCategory.PersonAttachment));
-    var enhancement = new DoublingEnhancement();
-    var enhancer = new TestablePhotoEnhancer(
-      services, [enhancement], category => category.IsAttachment() ? recorder : resolver(category))
-    {
-      EnhancementAnswer = enhancement.DisplayName
-    };
-    var image = new Data(20, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(4, 3), "scan.png"), "image/png", DataCategory.PersonAttachment);
-    var titled = await GedcomPhotoResidue.WithTitleAsync(image, "Deed", CancellationToken.None);
-    var person = CreateSamplePerson() with { Attachments = [titled with { Id = 20 }] };
-    var (dialog, _) = await CreateEnhancingDialogAsync(services, person, enhancer);
-    await using var window = await WindowHost.AttachAsync(dialog);
-
-    await EnhanceAdorners.TapAsync(dialog, dialog.Attachments, "EnhanceAttachmentCommand", dialog.Attachments.Single());
-    await WaitForAsync(() => dialog.Attachments.Count, count => count == 2, "The enhanced attachment was never added.");
-
-    var copy = Assert.IsType<AttachmentInfo>(recorder.Encoded);
-    Assert.Equal("Deed (Doubled)", copy.Title);
-    Assert.NotNull(copy.Image);
-    Assert.Null(copy.Image.Caption);
-  }
-
   private static async Task<Size?> ThumbnailSizeAsync(PersonDataItem item)
   {
     var thumbnail = await WaitForAsync(() => item.Thumbnail, source => source is not null, "The thumbnail never resolved.");

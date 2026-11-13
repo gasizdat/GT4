@@ -207,7 +207,7 @@ public partial class FamilyPage : ContentPage
   {
     if (attachment.Image is not null)
     {
-      await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image.Source], _AlertService));
+      await Navigation.PushModalAsync(new PhotoViewerDialog([attachment.Image], _AlertService));
       return;
     }
 
