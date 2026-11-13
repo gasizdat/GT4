@@ -546,17 +546,9 @@ public class FamilyPageTests
     var page = await ShowScanAndDeedAsync(services);
     var rows = page.AttachmentItems;
 
-    var thumbnail = await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => rows[0].Thumbnail),
-      source => source is not null,
-      timeoutMessage: "The scan's thumbnail never resolved.");
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => rows[1].HasThumbnail),
-      shown => shown,
-      TimeSpan.FromSeconds(1),
-      "A document row resolved a thumbnail.");
+    var thumbnail = await AttachmentRows.WaitForImageThumbnailOnlyAsync(rows[0], rows[1]);
 
-    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await ReadBytesAsync(thumbnail!)));
+    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await ReadBytesAsync(thumbnail)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
