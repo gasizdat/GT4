@@ -348,7 +348,8 @@ public partial class CreateOrUpdateNameDialog : ContentPage
     var maleName = ShowDeclensionNames ? MaleName : string.Empty;
     var femaleName = ShowDeclensionNames ? FemaleName : string.Empty;
     var attachments = await PersonDataItem.ToDataAsync(_Attachments);
-    Complete(new(name, maleName, femaleName, allPhotos, attachments));
+    var result = new Result(name, maleName, femaleName, allPhotos, attachments);
+    Complete(result);
   }
 
   private PersonDataItem GetFamilyData(Data data, DataCategory dataCategory)
