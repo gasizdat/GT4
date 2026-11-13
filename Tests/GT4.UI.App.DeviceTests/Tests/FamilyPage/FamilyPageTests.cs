@@ -523,14 +523,11 @@ public class FamilyPageTests
     await MainThread.InvokeOnMainThreadAsync(() => page.Navigation.PopModalAsync());
   }
 
-  // The scan is wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
   private static async Task<TestableFamilyPage> ShowScanAndDeedAsync(TestServices services)
   {
     var familyName = N(5, "Ivanov", NameType.FamilyName);
-    var scan = new Data(
-      3, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.FamilyAttachment);
-    var deed = new Data(
-      4, GedcomPhotoResidue.EncodeAttachment([1, 2, 3], "deed.pdf"), "application/pdf", DataCategory.FamilyAttachment);
+    var scan = TestImages.ScanAttachment(3, DataCategory.FamilyAttachment);
+    var deed = TestImages.DeedAttachment(4, DataCategory.FamilyAttachment);
     services.PersonManager
       .Setup(p => p.GetPersonInfosByNameAsync(familyName, true, It.IsAny<CancellationToken>()))
       .ReturnsAsync([]);
@@ -549,17 +546,9 @@ public class FamilyPageTests
     var page = await ShowScanAndDeedAsync(services);
     var rows = page.AttachmentItems;
 
-    var thumbnail = await Poll.UntilAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => rows[0].Thumbnail),
-      source => source is not null,
-      timeoutMessage: "The scan's thumbnail never resolved.");
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => rows[1].HasThumbnail),
-      shown => shown,
-      TimeSpan.FromSeconds(1),
-      "A document row resolved a thumbnail.");
+    var thumbnail = await AttachmentRows.WaitForImageThumbnailOnlyAsync(rows[0], rows[1]);
 
-    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await ReadBytesAsync(thumbnail!)));
+    Assert.Equal(new Size(100, 67), ImageUtils.PixelSize(await ReadBytesAsync(thumbnail)));
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 

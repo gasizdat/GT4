@@ -148,7 +148,7 @@ public class ImageUtilsTests
   }
 
   // A TIFF header and an IFD0 holding only the orientation tag, a single SHORT.
-  private static byte[] ExifSegment(ushort orientation, bool littleEndian)
+  internal static byte[] ExifSegment(ushort orientation, bool littleEndian)
   {
     var tiff = new byte[26];
     var byteOrder = littleEndian ? "II"u8 : "MM"u8;

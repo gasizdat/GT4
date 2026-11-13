@@ -365,6 +365,13 @@ public class CreateOrUpdatePersonDialogTests
     WaitForAsync(
       () => dialog.Navigation.ModalStack.OfType<ProgressDialog>().Any(), open => !open, "The progress dialog never closed.");
 
+  private static Task ConfirmPhotoCountStaysAsync(CreateOrUpdatePersonDialog dialog, int before, string failureMessage) =>
+    Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
+      count => count != before,
+      TimeSpan.FromSeconds(1),
+      failureMessage);
+
   [Fact]
   public async Task Each_photo_offers_one_bound_enhance_adorner_and_no_per_enhancement_button()
   {
@@ -439,11 +446,7 @@ public class CreateOrUpdatePersonDialogTests
     var before = dialog.Photos.Count;
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "Cancelling the sheet still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "Cancelling the sheet still added a photo.");
 
     Assert.Equal(["Double"], enhancer.OfferedEnhancementNames);
     Assert.Null(enhancement.Received);
@@ -466,11 +469,7 @@ public class CreateOrUpdatePersonDialogTests
     await WaitForAsync(() => enhancement.Received, received => received is not null, "The enhancement never ran.");
     await MainThread.InvokeOnMainThreadAsync(() => progress.DialogCommand.Execute(null));
     await WaitForProgressToCloseAsync(dialog);
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "A cancelled enhancement still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "A cancelled enhancement still added a photo.");
 
     Assert.Equal(UIStrings.BtnNameCancel, dialog.DialogButtonName);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
@@ -643,11 +642,7 @@ public class CreateOrUpdatePersonDialogTests
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
     await WaitForAsync(() => enhancement.Received, received => received is not null, "The enhancement never ran.");
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "A refused enhancement still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "A refused enhancement still added a photo.");
     await WaitForProgressToCloseAsync(dialog);
 
     services.AlertService.Verify(a => a.ShowErrorAsync(refusal), Times.Once());
@@ -725,11 +720,7 @@ public class CreateOrUpdatePersonDialogTests
     enhancer.EnhancementAnswer = enhancement.DisplayName;
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "Declining the download still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "Declining the download still added a photo.");
 
     Assert.NotNull(prompt);
     Assert.Contains("Test Model", prompt);
@@ -843,10 +834,6 @@ public class CreateOrUpdatePersonDialogTests
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 
-  // Wider than ThumbnailSize on both sides, so a thumbnail can't pass for the full-size image.
-  private static Data ScanAttachment(int id) =>
-    new(id, GedcomPhotoResidue.EncodeAttachment(TestImages.Png(300, 200), "scan.png"), "image/png", DataCategory.PersonAttachment);
-
   private static async Task<Size?> ThumbnailSizeAsync(PersonDataItem item)
   {
     var thumbnail = await WaitForAsync(() => item.Thumbnail, source => source is not null, "The thumbnail never resolved.");
@@ -865,7 +852,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task An_image_attachment_row_shows_a_downsized_thumbnail_and_a_document_row_none()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), Attachment(21)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment), Attachment(21)] };
     var dialog = await CreateDialogAsync(services, person);
     await using var window = await WindowHost.AttachAsync(dialog);
     var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
@@ -908,7 +895,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task Tapping_an_attachments_thumbnail_opens_its_full_size_image_alone_in_the_viewer()
   {
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), ScanAttachment(22)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment), TestImages.ScanAttachment(22, DataCategory.PersonAttachment)] };
     var dialog = await CreateDialogAsync(new TestServices(), person);
     await using var window = await WindowHost.AttachAsync(dialog);
     var scan = dialog.Attachments.Last();
@@ -926,7 +913,7 @@ public class CreateOrUpdatePersonDialogTests
   [Fact]
   public async Task Only_an_attachments_picture_opens_the_viewer_and_a_documents_opens_nothing()
   {
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20), Attachment(21)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment), Attachment(21)] };
     var dialog = await CreateDialogAsync(new TestServices(), person);
     await using var window = await WindowHost.AttachAsync(dialog);
     var previews = await MediaPreviews.WaitAsync(dialog, dialog.Attachments);
@@ -946,7 +933,7 @@ public class CreateOrUpdatePersonDialogTests
   public async Task An_enhanced_attachment_copy_shows_a_downsized_thumbnail()
   {
     var services = new TestServices();
-    var person = CreateSamplePerson() with { Attachments = [ScanAttachment(20)] };
+    var person = CreateSamplePerson() with { Attachments = [TestImages.ScanAttachment(20, DataCategory.PersonAttachment)] };
     var enhancement = new DoublingEnhancement();
     var (dialog, enhancer) = await CreateEnhancingDialogAsync(services, person, enhancement);
     await using var window = await WindowHost.AttachAsync(dialog);

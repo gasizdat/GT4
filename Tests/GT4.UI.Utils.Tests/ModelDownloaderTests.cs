@@ -3,7 +3,6 @@ using System.Security.Cryptography;
 using FluentAssertions;
 using GT4.Core.Utils;
 using GT4.UI.Abstraction;
-using Moq;
 using Xunit;
 
 namespace GT4.UI.Utils.Tests;
@@ -12,23 +11,9 @@ public class ModelDownloaderTests : IDisposable
 {
   private const string UnverifiedHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-  private readonly string _Root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-  private readonly FixedStorage _Storage;
-  private readonly TempFileSystem _FileSystem;
+  private readonly FixtureModelCache _Cache = new();
 
-  public ModelDownloaderTests()
-  {
-    _FileSystem = new TempFileSystem(_Root);
-    _Storage = new FixedStorage(new DirectoryDescription(Environment.SpecialFolder.ApplicationData, ["models"]));
-  }
-
-  public void Dispose()
-  {
-    if (Directory.Exists(_Root))
-    {
-      Directory.Delete(_Root, recursive: true);
-    }
-  }
+  public void Dispose() => _Cache.Dispose();
 
   [Fact]
   public async Task AlreadyPresentModel_NoHttpCallMade()
@@ -37,7 +22,7 @@ public class ModelDownloaderTests : IDisposable
     Seed(model.CacheFileName);
     var handler = new RecordingHandler([1, 2, 3]);
 
-    await Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+    await _Cache.Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
 
     handler.RequestCount.Should().Be(0);
   }
@@ -46,7 +31,7 @@ public class ModelDownloaderTests : IDisposable
   public void IsDownloaded_OnlyForAFileUnderTheModelsCacheName()
   {
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
-    var downloader = Downloader(new FailingHandler());
+    var downloader = _Cache.Downloader(new FailingHandler());
     Seed(model.FileName);
 
     var beforeDownload = downloader.IsDownloaded(model);
@@ -67,10 +52,10 @@ public class ModelDownloaderTests : IDisposable
     Seed(stale.CacheFileName);
     var handler = new RecordingHandler(content);
 
-    await Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+    await _Cache.Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
 
     handler.RequestCount.Should().Be(1);
-    _FileSystem.FileExists(new FileDescription(_Storage.Models, model.CacheFileName, null)).Should().BeTrue();
+    _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, model.CacheFileName, null)).Should().BeTrue();
   }
 
   [Fact]
@@ -81,15 +66,15 @@ public class ModelDownloaderTests : IDisposable
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), hash, "Model", "MIT", 5);
     var handler = new RecordingHandler(content);
 
-    await Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+    await _Cache.Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
 
-    var target = new FileDescription(_Storage.Models, model.CacheFileName, null);
-    _FileSystem.FileExists(target).Should().BeTrue();
-    using var stream = _FileSystem.OpenReadStream(target);
+    var target = new FileDescription(_Cache.Models, model.CacheFileName, null);
+    _Cache.FileSystem.FileExists(target).Should().BeTrue();
+    using var stream = _Cache.FileSystem.OpenReadStream(target);
     using var buffer = new MemoryStream();
     stream.CopyTo(buffer);
     buffer.ToArray().Should().BeEquivalentTo(content);
-    _FileSystem.FileExists(new FileDescription(_Storage.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
+    _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
   }
 
   [Fact]
@@ -99,11 +84,11 @@ public class ModelDownloaderTests : IDisposable
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var handler = new RecordingHandler(content);
 
-    var act = () => Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+    var act = () => _Cache.Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
 
     await act.Should().ThrowAsync<ModelDownloadException>();
-    _FileSystem.FileExists(new FileDescription(_Storage.Models, model.CacheFileName, null)).Should().BeFalse();
-    _FileSystem.FileExists(new FileDescription(_Storage.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
+    _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, model.CacheFileName, null)).Should().BeFalse();
+    _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
   }
 
   [Fact]
@@ -112,7 +97,7 @@ public class ModelDownloaderTests : IDisposable
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var handler = new FailingHandler();
 
-    var act = () => Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+    var act = () => _Cache.Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
 
     await act.Should().ThrowAsync<ModelDownloadException>();
   }
@@ -123,7 +108,7 @@ public class ModelDownloaderTests : IDisposable
     var model = new ModelDescriptor("model.onnx", new Uri("https://example.test/model.onnx"), UnverifiedHash, "Model", "MIT", 3);
     var handler = new TimingOutHandler();
 
-    var act = () => Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
+    var act = () => _Cache.Downloader(handler).EnsureModelAsync(model, CancellationToken.None);
 
     var thrown = await act.Should().ThrowAsync<ModelDownloadException>();
     thrown.WithInnerException<TaskCanceledException>();
@@ -136,14 +121,14 @@ public class ModelDownloaderTests : IDisposable
     var body = new StalledStream();
     using var cancellation = new CancellationTokenSource();
 
-    var download = Downloader(new StreamHandler(body)).EnsureModelAsync(model, cancellation.Token);
+    var download = _Cache.Downloader(new StreamHandler(body)).EnsureModelAsync(model, cancellation.Token);
     await body.Reading;
     cancellation.Cancel();
 
     var act = () => download;
     await act.Should().ThrowWithinAsync<OperationCanceledException>(TimeSpan.FromSeconds(5));
-    _FileSystem.FileExists(new FileDescription(_Storage.Models, model.CacheFileName, null)).Should().BeFalse();
-    _FileSystem.FileExists(new FileDescription(_Storage.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
+    _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, model.CacheFileName, null)).Should().BeFalse();
+    _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, $"{model.CacheFileName}.download", null)).Should().BeFalse();
   }
 
   [Fact]
@@ -157,10 +142,10 @@ public class ModelDownloaderTests : IDisposable
       Seed(fileName);
     }
 
-    Downloader(new FailingHandler()).RemoveUnusedModels([model]);
+    _Cache.Downloader(new FailingHandler()).RemoveUnusedModels([model]);
 
     unused
-      .Where(fileName => _FileSystem.FileExists(new FileDescription(_Storage.Models, fileName, null)))
+      .Where(fileName => _Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, fileName, null)))
       .Should().BeEmpty();
   }
 
@@ -175,22 +160,15 @@ public class ModelDownloaderTests : IDisposable
       Seed(fileName);
     }
 
-    Downloader(new FailingHandler()).RemoveUnusedModels([lowercase]);
+    _Cache.Downloader(new FailingHandler()).RemoveUnusedModels([lowercase]);
 
     used
-      .Where(fileName => !_FileSystem.FileExists(new FileDescription(_Storage.Models, fileName, null)))
+      .Where(fileName => !_Cache.FileSystem.FileExists(new FileDescription(_Cache.Models, fileName, null)))
       .Should().BeEmpty();
   }
 
   private void Seed(string fileName) =>
-    _FileSystem.Copy(new MemoryStream([1, 2, 3]), new FileDescription(_Storage.Models, fileName, null));
-
-  private ModelDownloader Downloader(HttpMessageHandler handler)
-  {
-    var factory = new Mock<IHttpClientFactory>();
-    factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler));
-    return new ModelDownloader(factory.Object, _FileSystem, _Storage);
-  }
+    _Cache.FileSystem.Copy(new MemoryStream([1, 2, 3]), new FileDescription(_Cache.Models, fileName, null));
 
   private sealed class RecordingHandler(byte[] content) : HttpMessageHandler
   {
@@ -201,12 +179,6 @@ public class ModelDownloaderTests : IDisposable
       RequestCount++;
       return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(content) });
     }
-  }
-
-  private sealed class FailingHandler : HttpMessageHandler
-  {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
-      Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
   }
 
   private sealed class TimingOutHandler : HttpMessageHandler
