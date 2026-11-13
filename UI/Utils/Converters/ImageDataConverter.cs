@@ -59,6 +59,7 @@ public sealed class ImageDataConverter : IDataConverter
     }
 
     // Only a thumbnail decodes here; unlike a file that isn't an image, one that won't decode still gets a picture.
-    return Task.FromResult<object?>(new PhotoInfo(imageSource ?? ImageUtils.UnreadableImageStub, null));
+    var photo = new PhotoInfo(imageSource ?? ImageUtils.UnreadableImageStub, null);
+    return Task.FromResult<object?>(photo);
   }
 }
