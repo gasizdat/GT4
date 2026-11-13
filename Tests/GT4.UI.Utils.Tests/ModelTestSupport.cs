@@ -35,19 +35,28 @@ internal sealed class FixtureModelCache : IDisposable
     _FileSystem.Copy(fixture, new FileDescription(_Storage.Models, model.CacheFileName, null));
   }
 
-  public IModelSessionProvider SessionProvider()
+  public IFileSystem FileSystem => _FileSystem;
+
+  public DirectoryDescription Models => _Storage.Models;
+
+  public ModelDownloader Downloader(HttpMessageHandler handler)
   {
     var factory = new Mock<IHttpClientFactory>();
-    factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(new FailingHandler()));
-    var downloader = new ModelDownloader(factory.Object, _FileSystem, _Storage);
-    return new ModelSessionProvider(downloader, _FileSystem, _Storage);
+    factory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(() => new HttpClient(handler));
+    return new ModelDownloader(factory.Object, _FileSystem, _Storage);
   }
 
-  private sealed class FailingHandler : HttpMessageHandler
+  public IModelSessionProvider SessionProvider()
   {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
-      Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+    var downloader = Downloader(new FailingHandler());
+    return new ModelSessionProvider(downloader, _FileSystem, _Storage);
   }
+}
+
+internal sealed class FailingHandler : HttpMessageHandler
+{
+  protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) =>
+    Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
 }
 
 internal sealed class FixedStorage(DirectoryDescription models) : IStorage
