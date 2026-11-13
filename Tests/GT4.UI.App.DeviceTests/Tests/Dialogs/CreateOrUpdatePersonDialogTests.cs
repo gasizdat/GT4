@@ -365,6 +365,13 @@ public class CreateOrUpdatePersonDialogTests
     WaitForAsync(
       () => dialog.Navigation.ModalStack.OfType<ProgressDialog>().Any(), open => !open, "The progress dialog never closed.");
 
+  private static Task ConfirmPhotoCountStaysAsync(CreateOrUpdatePersonDialog dialog, int before, string failureMessage) =>
+    Poll.ConfirmNeverAsync(
+      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
+      count => count != before,
+      TimeSpan.FromSeconds(1),
+      failureMessage);
+
   [Fact]
   public async Task Each_photo_offers_one_bound_enhance_adorner_and_no_per_enhancement_button()
   {
@@ -439,11 +446,7 @@ public class CreateOrUpdatePersonDialogTests
     var before = dialog.Photos.Count;
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "Cancelling the sheet still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "Cancelling the sheet still added a photo.");
 
     Assert.Equal(["Double"], enhancer.OfferedEnhancementNames);
     Assert.Null(enhancement.Received);
@@ -466,11 +469,7 @@ public class CreateOrUpdatePersonDialogTests
     await WaitForAsync(() => enhancement.Received, received => received is not null, "The enhancement never ran.");
     await MainThread.InvokeOnMainThreadAsync(() => progress.DialogCommand.Execute(null));
     await WaitForProgressToCloseAsync(dialog);
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "A cancelled enhancement still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "A cancelled enhancement still added a photo.");
 
     Assert.Equal(UIStrings.BtnNameCancel, dialog.DialogButtonName);
     services.AlertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
@@ -643,11 +642,7 @@ public class CreateOrUpdatePersonDialogTests
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
     await WaitForAsync(() => enhancement.Received, received => received is not null, "The enhancement never ran.");
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "A refused enhancement still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "A refused enhancement still added a photo.");
     await WaitForProgressToCloseAsync(dialog);
 
     services.AlertService.Verify(a => a.ShowErrorAsync(refusal), Times.Once());
@@ -725,11 +720,7 @@ public class CreateOrUpdatePersonDialogTests
     enhancer.EnhancementAnswer = enhancement.DisplayName;
 
     await TapEnhanceAdornerAsync(dialog, dialog.Photos.First());
-    await Poll.ConfirmNeverAsync(
-      () => MainThread.InvokeOnMainThreadAsync(() => dialog.Photos.Count),
-      count => count != before,
-      TimeSpan.FromSeconds(1),
-      "Declining the download still added a photo.");
+    await ConfirmPhotoCountStaysAsync(dialog, before, "Declining the download still added a photo.");
 
     Assert.NotNull(prompt);
     Assert.Contains("Test Model", prompt);
