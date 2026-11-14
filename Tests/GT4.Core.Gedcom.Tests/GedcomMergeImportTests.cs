@@ -39,7 +39,7 @@ public sealed class GedcomMergeImportTests : IAsyncLifetime
   {
     var path = Path.Combine(Path.GetTempPath(), $"gt4_merge_{Guid.NewGuid():N}.db");
     _paths.Add(path);
-    return await ProjectDocument.CreateNewAsync(path, "gedcom", Token);
+    return await ProjectDocument.CreateNewAsync(path, "gedcom", string.Empty, Token);
   }
 
   private Task ImportAsync(ProjectDocument document, string ged) =>

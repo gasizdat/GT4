@@ -7,6 +7,6 @@ internal sealed class ProjectDocumentFactory : IProjectDocumentFactory
   public async Task<IProjectDocument> OpenAsync(string path, CancellationToken token) =>
     await ProjectDocument.OpenAsync(path, token);
 
-  public async Task<IProjectDocument> CreateNewAsync(string path, string name, CancellationToken token) =>
-    await ProjectDocument.CreateNewAsync(path, name, token);
+  public async Task<IProjectDocument> CreateNewAsync(string path, string name, string description, CancellationToken token) =>
+    await ProjectDocument.CreateNewAsync(path, name, description, token);
 }

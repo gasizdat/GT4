@@ -19,7 +19,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
 
   public async ValueTask InitializeAsync()
   {
-    _doc = await ProjectDocument.CreateNewAsync(_path, "integration", TestContext.Current.CancellationToken);
+    _doc = await ProjectDocument.CreateNewAsync(_path, "integration", "integration description", TestContext.Current.CancellationToken);
   }
 
   public async ValueTask DisposeAsync()
@@ -54,9 +54,10 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     new(ElementId.NonCommittedId, content, "application/octet-stream", category);
 
   [Fact]
-  public async Task CreateNewAsync_StoresTheGivenName()
+  public async Task CreateNewAsync_StoresTheGivenNameAndDescription()
   {
     (await _doc.Metadata.GetProjectNameAsync(Token)).Should().Be("integration");
+    (await _doc.Metadata.GetProjectDescriptionAsync(Token)).Should().Be("integration description");
   }
 
   [Fact]
@@ -84,7 +85,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
   [Fact]
   public async Task Metadata_Get_MissingKey_ReturnsNull()
   {
-    (await _doc.Metadata.GetProjectDescriptionAsync(Token)).Should().BeNull();
+    (await _doc.Metadata.GetAsync<string>("missing", Token)).Should().BeNull();
   }
 
   [Fact]
@@ -1268,7 +1269,7 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     var path = Path.Combine(Path.GetTempPath(), $"gt4_open_{Guid.NewGuid():N}.db");
     try
     {
-      var doc = await ProjectDocument.CreateNewAsync(path, "persisted", Token);
+      var doc = await ProjectDocument.CreateNewAsync(path, "persisted", string.Empty, Token);
       await doc.DisposeAsync();
 
       await using var reopened = await ProjectDocument.OpenAsync(path, Token);
