@@ -43,7 +43,7 @@ family calendar. No account, no cloud.
 
 ## Description (≤10,000 chars)
 
-*About 4,940 characters once the source line wraps below are unwrapped into
+*About 5,060 characters once the source line wraps below are unwrapped into
 single spaces, counting the `###` and `-` markers. Well inside the 10,000
 limit; see the Play appendix, where it matters.*
 
@@ -136,9 +136,10 @@ Available in **English, Russian, German, Spanish and French**.
 ### Your data, your device
 
 Genealogy Tree has no account system, no cloud sync, no analytics and no ads.
-Everything lives in your Documents folder. The only time the app reaches the
-internet at all is when *you* put a web link or a web image into a biography and
-then open it.
+Everything lives in your Documents folder. The only times the app reaches the
+internet are when *you* put a web link or a web image into a biography and then
+open it, and when you agree to download a photo enhancement model on Windows.
+Photos are enhanced on your device and never leave it.
 
 ## Features (≤200 chars each, up to 20 entries)
 
@@ -253,7 +254,7 @@ permissions declaration, given the app itself reads only its project files.
 **Short description:** Your family tree, offline and private. GEDCOM in and
 out, photos, kinship tools. (80 chars)
 
-**Full description:** the Description above is about 4,940 characters against
+**Full description:** the Description above is about 5,060 characters against
 Play's 4,000 limit, so it no longer fits as-is and a section has to be cut, not
 just trimmed. Play
 also renders no rich text, so the `###` and `**` markers have to go and

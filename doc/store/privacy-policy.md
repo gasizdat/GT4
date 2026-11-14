@@ -6,7 +6,7 @@ master), which also covers Android. This is the Windows-only text that earlier
 submissions pasted into Partner Center → Properties; edit the hosted page, not
 this file.*
 
-*Last updated: 9 October 2026*
+*Last updated: 7 November 2026*
 
 ## The short version
 
@@ -35,16 +35,28 @@ The developer has no access to any of it.
 
 ## What the app sends over the network
 
-Genealogy Tree works offline. It makes a network request in exactly two
-situations, both of which you start yourself:
+Genealogy Tree works offline. It makes a network request in exactly three
+situations, all of which you start yourself:
 
 1. You reference an image by web address inside a biography, and the app fetches
    that image so it can display it.
 2. You click a web link inside a biography, and the app hands it to your browser.
+3. You choose a photo enhancement whose model is not on your device yet. The app
+   first names the model, its license and its download size, and downloads it
+   only if you agree.
 
-In both cases the request goes to the site you named, not to us, and it carries
-nothing about your family data beyond the address you supplied. If you never put
-a web address into a biography, the app never makes a network request at all.
+For a web image or link, the request goes to the site you named, not to us, and
+it carries nothing about your family data beyond the address you supplied.
+
+A model download is a plain request for a fixed file in the `models-v1` or
+`models-v2` release of the app's own repository, <https://github.com/gasizdat/GT4>,
+so it goes to GitHub. It carries nothing about your project or your photos.
+GitHub's [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement)
+covers what GitHub records about the request. The enhancement itself runs on
+your device, and the photo never leaves it.
+
+If you never put a web address into a biography and never download an
+enhancement model, the app never makes a network request at all.
 
 ## What the app does not do
 

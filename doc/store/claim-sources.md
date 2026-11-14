@@ -42,15 +42,38 @@ says which came from which.
 ## The one network claim to keep precise
 
 The app **does** declare `INTERNET` on Android and registers an
-`IHttpClientFactory`. Both serve exactly one path: `ImageUtils.ToBytesAsync`
-fetching an `ImageSource.FromUri`, i.e. a web image a user put in a biography.
+`IHttpClientFactory`. The factory serves two paths: `ImageUtils.ToBytesAsync`
+fetching an `ImageSource.FromUri`, i.e. a web image a user put in a biography,
+and `ModelDownloader.EnsureModelAsync` fetching a photo enhancement model.
 `MarkdownView` additionally hands external links to `Launcher.Default.OpenAsync`.
 
+The model download, re-checked against master `2cab9d93` for the November 2026
+release:
+
+- **Windows only.** `UI/Utils/Extensions/ServiceCollectionExtensions.cs`
+  registers the three `IPhotoEnhancement`s under `#if WINDOWS`. Android still
+  declares `INTERNET`, but with no enhancement registered nothing there reaches
+  the downloader, so on Android the permission serves the web-image path alone.
+- **Only after the user agrees.** `PhotoEnhancer.DownloadMissingModelsAsync`
+  shows a confirmation naming each missing model, its license and its size, and
+  calls the downloader only on a yes (PR #548).
+- **A fixed file from this repository.** Each address is a constant in
+  `UpscalePhotoEnhancement.cs`, `ColorizePhotoEnhancement.cs` or
+  `RestorePhotoEnhancement.cs`, under the `models-v1` or `models-v2` release of
+  `github.com/gasizdat/GT4`. The request is a plain `GetStreamAsync` of that
+  address and carries nothing about the project or the photo.
+- **Once per model.** A downloaded model stays in the app's `.models` folder,
+  and `ModelDownloader.IsDownloaded` skips the request from then on.
+- **Photos stay on the device.** The enhancements run in-process through ONNX
+  Runtime; nothing uploads a photo.
+
 So "works offline, nothing is sent anywhere" is true of the app's own behaviour,
-and the listing says so in that form — *"The only time the app reaches the
-internet at all is when you put a web link or a web image into a biography and
-then open it."* Do not shorten this to a flat "no internet access": the manifest
-says otherwise, and a reviewer can read the manifest.
+and the listing says so in that form — *"The only times the app reaches the
+internet are when you put a web link or a web image into a biography and then
+open it, and when you agree to download a photo enhancement model on Windows.
+Photos are enhanced on your device and never leave it."* Do not shorten this to
+a flat "no internet access": the manifest says otherwise, and a reviewer can
+read the manifest.
 
 ## Claims deliberately **not** made
 
