@@ -27,6 +27,10 @@ your own user account:
   own data folder while it is in use.
 - **Your settings** — language, theme, text size, date format, name display order
   — are kept in a small configuration file in the same folder.
+- **Photo enhancement models** you download are kept in a `.models` folder in
+  the same folder and reused, so each is downloaded only once. When an app
+  update replaces a model, the old file is deleted and the new one is downloaded
+  the next time you use that enhancement.
 - **Error logs**, if the app fails, are written to `GT4\CrashLogs` in your
   application data folder. They are never uploaded; they exist so you can read
   them or send them to us yourself if you choose to report a problem.

@@ -202,8 +202,16 @@ features and non-crash bug fixes, and marking every submission mandatory just
 trains the toggle to be ignored. Turn it on when a submission fixes a crash or
 a data-loss/corruption bug that shipped in a previous submission.
 
-The October 2026 release (this one, at the time of writing) qualifies, on data
-loss: PR #458 fixes #451, where a biography typed into the *create* person
+The November 2026 release (this one, at the time of writing) qualifies, on data
+loss: PR #519 fixes #510, where changing an approximate date in the date dialog
+silently dropped its "about". The dialog opened such a date with its switches
+off, so any edit saved a different date than the one the user started from.
+Checked against `v4.0.723.0` rather than assumed: its `SelectDateDialog`
+constructor has no `YearApproximate` case. The same release fixes #520 (PR
+#521), where a GEDCOM export could leave a godparent or witness pointer naming
+the wrong person; that one was not checked against the tag.
+
+The October 2026 release qualified the same way: PR #458 fixes #451, where a biography typed into the *create* person
 dialog was silently discarded on save. Checked against `v4.0.688.0` rather than
 assumed — there the dialog showed the biography editor unconditionally, but only
 built the item behind it for an existing person, so the editor had nothing to
@@ -306,35 +314,56 @@ that table together when behaviour changes.
 
 ### Open bugs at the time of this release, judged not blocking
 
-Pulled live on 2026-10-09; none touch the Windows Store build's correctness.
+Pulled live on 2026-11-14; none touch the Windows Store build's correctness.
+(#466, the flaky device test listed here in October, was closed on 2026-10-10.)
 
-- **#466** — a flaky device test (`PersonPageTests`, photo box in a very short
-  landscape window). Test-only; the workflow runs no tests anyway.
+- **#546** — `AndroidFileSystem.Move` isn't atomic, which the model cache
+  relies on. Dormant: no photo enhancement is registered on Android.
 - **#271** — `PersonInfoView` retained after in-place rebinding. Android-only,
   shipped in every earlier release.
 - **#262** — memory growth scrolling the families list one card at a time;
   partly fixed earlier, the remainder shipped in every earlier release.
 
-**The two family-tree screenshots were re-shot** against the installed
-`4.0.723.0` MSIX, since #469 replaced the layout they showed; `04`, `05` and `08`
-were compared against the same build and kept. This submission swapped the two
-new files in by hand after a `.csv`-only import; from the next release on, the
-folder import above carries all ten.
-See [listings/README.md](listings/README.md).
+**Six screenshots were re-shot** against the installed `4.0.847.0` MSIX: `02`,
+`04`, `05`, `06` and `13` because their side menus gained the fan chart or Date
+tools button, and `07` for its header. `08`, `09`, `10` and `11` were compared
+against the same build and kept. See [listings/README.md](listings/README.md)
+("November 2026 release"). (In October only the two family-tree shots were
+re-shot, against `4.0.723.0`, after #469 replaced the layout they showed.)
 
-**The sideload check passed** on 2026-10-09: `4.0.723.0` installed from the
-release's `.msix`, `Get-AppxPackage` reports PFN
-`gasizdat.GenealogyTree_25ksdz0mncfjg`, and the app launched, opened a project
-and drove the family tree.
+**The sideload check passed** on 2026-11-14: `4.0.847.0` installed from the
+release's `.msix` after removing the previous install, `Get-AppxPackage` reports
+PFN `gasizdat.GenealogyTree_25ksdz0mncfjg`, and the app launched, opened the
+demo project and drew the family tree and the fan chart. It also ran a photo
+enhancement, the first packaged build to carry one: with the Upscale model
+moved out of `.models` beforehand, the app named the model, its license and its
+size, downloaded it on a yes, and added an "(AI: upscaled ×2)" copy beside the
+source. The dev machine's `.models` folder in `%APPDATA%` already exists, so
+MSIX doesn't redirect it; empty it of the model under test, or the download is
+never exercised.
 
-**WACK passed** on the same package (kit 10.0.28000, 2026-10-09): 23 of 24 tests
-pass, overall result PASS. The one failure, *Blocked executables*, is an
+**WACK passed** on the same package (kit 10.0.28000.2957, 2026-11-14): 23 of 24
+tests pass, overall result PASS. The one failure, *Blocked executables*, is an
 optional test (`OPTIONAL="TRUE"` in the report) aimed at Windows S mode, and
 expected here. `Process.Start`/`ShellExecute` are MAUI's `Launcher`, which
 opens attachments and biography links. The "Cmd"/"reG"/"CdB"/"MSBuild" hits are
 substring matches in strings: in GT4's own resources, the Mac hotkey hint
-"Cmd + +/-/0"; the rest are inside Markdig, MAUI and WinRT. Expect the same
+"Cmd + +/-/0"; the rest are inside Markdig, MAUI and WinRT. New in November is
+one more of the same kind, "DNx" inside `onnxruntime.dll`. Expect the same
 result on every release; a new *required* failure is what to look for.
+
+WACK also runs unattended, which is how the November run was done, from an
+elevated shell:
+
+```powershell
+$appcert = 'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe'
+& $appcert reset
+& $appcert test -appxpackagepath <full path to the .msix> -reportoutputpath <full path to a new .xml>
+```
+
+The signing certificate has to be trusted first, the previous install removed,
+and the report file must not exist yet. `OVERALL_RESULT` in the report is the
+verdict.
 
 The palette needs no inventory here any more. #358 and #360 cleared the
 last of the MAUI template colours, and what replaced them is pinned by the
