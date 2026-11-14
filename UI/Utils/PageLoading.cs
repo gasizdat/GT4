@@ -41,11 +41,11 @@ public sealed class PageLoading : INotifyPropertyChanged
 
   public void End() => IsLoading = false;
 
-  public void Run(bool hasContent, Func<Task> work)
+  public Task Run(bool hasContent, Func<Task> work)
   {
     Begin(hasContent);
 
-    _ = SafeTask.Run(async () =>
+    return SafeTask.Run(async () =>
     {
       try
       {

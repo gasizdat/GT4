@@ -18,11 +18,11 @@ public class PageLoadingTests
     var loading = new PageLoading(alertService.Object);
     var release = new TaskCompletionSource();
 
-    loading.Run(hasContent: true, () => release.Task);
+    var run = loading.Run(hasContent: true, () => release.Task);
 
-    Assert.False(loading.IsLoading);
+    Assert.False(loading.IsLoading, "A load over existing content raised the flag.");
     release.SetResult();
-    await loading.UntilIdleAsync("A load over existing content raised the flag.");
+    await run;
   }
 
   [Fact]
@@ -31,10 +31,11 @@ public class PageLoadingTests
     var alertService = new Mock<IAlertService>();
     var loading = new PageLoading(alertService.Object);
 
-    loading.Run(hasContent: false, () => Task.FromException(new InvalidOperationException()));
+    var run = loading.Run(hasContent: false, () => Task.FromException(new InvalidOperationException()));
 
     Assert.True(loading.IsLoading);
-    await loading.UntilIdleAsync("A failed load left the flag raised.");
+    await run;
+    Assert.False(loading.IsLoading, "A failed load left the flag raised.");
     alertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Once());
   }
 
@@ -45,9 +46,9 @@ public class PageLoadingTests
     var alertService = new Mock<IAlertService>();
     var loading = new PageLoading(alertService.Object);
 
-    loading.Run(hasContent: false, () => Task.FromException(new ObjectDisposedException("project")));
+    await loading.Run(hasContent: false, () => Task.FromException(new ObjectDisposedException("project")));
 
-    await loading.UntilIdleAsync("A load lost to project teardown left the flag raised.");
+    Assert.False(loading.IsLoading, "A load lost to project teardown left the flag raised.");
     alertService.Verify(a => a.ShowErrorAsync(It.IsAny<Exception>()), Times.Never());
   }
 }
