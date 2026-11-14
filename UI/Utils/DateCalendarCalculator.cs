@@ -53,7 +53,7 @@ public static class DateCalendarCalculator
     return new DateCalendarMonth(days, dayUnknown);
   }
 
-  public static int CountUnplaceable(PersonInfo[] persons, IReadOnlyDictionary<int, Relative[]> relativesByPersonId)
+  public static int CountUnplaceable(PersonInfo[] persons)
   {
     bool IsUnplaceable(Date date) => date.Status is DateStatus.MonthUnknown or DateStatus.YearApproximate;
 

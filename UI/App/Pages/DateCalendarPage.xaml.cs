@@ -89,7 +89,7 @@ public partial class DateCalendarPage : ContentPage
 
     var persons = await project.PersonManager.GetPersonInfosAsync(selectMainPhoto: false, token);
     var relativesByPersonId = await project.Relatives.GetRelativesForPersonsAsync(persons, token);
-    var unplaceableCount = DateCalendarCalculator.CountUnplaceable(persons, relativesByPersonId);
+    var unplaceableCount = DateCalendarCalculator.CountUnplaceable(persons);
 
     await SafeTask.RunOnMainThread(() =>
     {
