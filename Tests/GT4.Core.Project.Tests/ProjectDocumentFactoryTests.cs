@@ -34,10 +34,8 @@ public sealed class ProjectDocumentFactoryTests : IAsyncLifetime
   [Fact]
   public async Task CreateNewAsync_CreatesADocumentUsableAfterOpenAsync()
   {
-    await using (var created = await _factory.CreateNewAsync(_path, "factory-tests", Token))
-    {
-      await created.Metadata.SetProjectNameAsync("factory-tests", Token);
-    }
+    var created = await _factory.CreateNewAsync(_path, "factory-tests", Token);
+    await created.DisposeAsync();
 
     await using var opened = await _factory.OpenAsync(_path, Token);
     (await opened.Metadata.GetProjectNameAsync(Token)).Should().Be("factory-tests");

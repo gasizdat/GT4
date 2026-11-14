@@ -54,6 +54,12 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     new(ElementId.NonCommittedId, content, "application/octet-stream", category);
 
   [Fact]
+  public async Task CreateNewAsync_StoresTheGivenName()
+  {
+    (await _doc.Metadata.GetProjectNameAsync(Token)).Should().Be("integration");
+  }
+
+  [Fact]
   public async Task Metadata_RoundTripsNameAndDescription()
   {
     await _doc.Metadata.SetProjectNameAsync("My Tree", Token);
@@ -1262,10 +1268,8 @@ public sealed class ProjectDocumentIntegrationTests : IAsyncLifetime
     var path = Path.Combine(Path.GetTempPath(), $"gt4_open_{Guid.NewGuid():N}.db");
     try
     {
-      await using (var doc = await ProjectDocument.CreateNewAsync(path, "persisted-test", Token))
-      {
-        await doc.Metadata.SetProjectNameAsync("persisted", Token);
-      }
+      var doc = await ProjectDocument.CreateNewAsync(path, "persisted", Token);
+      await doc.DisposeAsync();
 
       await using var reopened = await ProjectDocument.OpenAsync(path, Token);
       (await reopened.Metadata.GetProjectNameAsync(Token)).Should().Be("persisted");

@@ -61,7 +61,6 @@ public sealed class ProjectListTests : IDisposable
     var path = _fs.ToPath(origin);
     Directory.CreateDirectory(Path.GetDirectoryName(path)!);
     await using var doc = await ProjectDocument.CreateNewAsync(path, name, Token);
-    await doc.Metadata.SetProjectNameAsync(name, Token);
     await doc.Metadata.SetProjectDescriptionAsync(description, Token);
     return origin;
   }
@@ -371,10 +370,8 @@ public sealed class ProjectListTests : IDisposable
   {
     // Build a standalone project file, then import its bytes.
     var sourcePath = Path.Combine(_root, "import-source.gt4");
-    await using (var doc = await ProjectDocument.CreateNewAsync(sourcePath, "Imported", Token))
-    {
-      await doc.Metadata.SetProjectNameAsync("Imported", Token);
-    }
+    var doc = await ProjectDocument.CreateNewAsync(sourcePath, "Imported", Token);
+    await doc.DisposeAsync();
 
     ProjectInfo imported;
     await using (var content = File.OpenRead(sourcePath))

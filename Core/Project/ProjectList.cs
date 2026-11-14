@@ -81,9 +81,7 @@ internal class ProjectList : IProjectList
     try
     {
       host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
-      await Task.WhenAll(
-        host.Project.Metadata.SetProjectNameAsync(projectName, token),
-        host.Project.Metadata.SetProjectDescriptionAsync(projectDescription, token));
+      await host.Project.Metadata.SetProjectDescriptionAsync(projectDescription, token);
     }
     catch
     {
