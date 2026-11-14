@@ -18,7 +18,7 @@ public sealed class ProjectDocumentConcurrencyTests : IAsyncLifetime
 
   public async ValueTask InitializeAsync()
   {
-    _doc = await ProjectDocument.CreateNewAsync(_path, "concurrency-tests", TestContext.Current.CancellationToken);
+    _doc = await ProjectDocument.CreateNewAsync(_path, "concurrency-tests", string.Empty, TestContext.Current.CancellationToken);
   }
 
   public async ValueTask DisposeAsync()

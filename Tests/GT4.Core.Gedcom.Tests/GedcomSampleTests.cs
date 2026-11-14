@@ -46,7 +46,7 @@ public sealed class GedcomSampleTests : IAsyncLifetime
   {
     var path = Path.Combine(Path.GetTempPath(), $"gt4_gedcom_{Guid.NewGuid():N}.db");
     _paths.Add(path);
-    return await ProjectDocument.CreateNewAsync(path, "gedcom", Token);
+    return await ProjectDocument.CreateNewAsync(path, "gedcom", string.Empty, Token);
   }
 
   private async Task<ProjectDocument> ImportSampleAsync(string fileName)

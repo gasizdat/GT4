@@ -220,11 +220,11 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     await command.ExecuteNonQueryAsync(token);
   }
 
-  public static async Task<ProjectDocument> CreateNewAsync(string path, string name, CancellationToken token)
+  public static async Task<ProjectDocument> CreateNewAsync(string path, string name, string description, CancellationToken token)
   {
     var ret = new ProjectDocument(path, SqliteOpenMode.ReadWriteCreate);
     await ret.OpenAsync(token);
-    await ret.InitNewDBAsync(token);
+    await ret.InitNewDBAsync(name, description, token);
 
     return ret;
   }
@@ -314,13 +314,15 @@ internal sealed class ProjectDocument : IProjectDocument, IAsyncDisposable, IDis
     Interlocked.Exchange(ref _ProjectRevision, persisted ?? ProjectInfo.InitialRevision);
   }
 
-  private async Task InitNewDBAsync(CancellationToken token)
+  private async Task InitNewDBAsync(string name, string description, CancellationToken token)
   {
     CheckForDisposed();
     using var transaction = await BeginTransactionAsync(token);
 
     await CreateTablesAsync(token);
     await SetSchemaVersionAsync(CurrentSchemaVersion, token);
+    await _TableMetadata.SetProjectNameAsync(name, token);
+    await _TableMetadata.SetProjectDescriptionAsync(description, token);
 
     await transaction.CommitAsync(token);
     _SchemaVersion = CurrentSchemaVersion;

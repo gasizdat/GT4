@@ -73,27 +73,16 @@ internal class ProjectList : IProjectList
     var prefix = dir.Path.Last();
     var projectFileName = GetUniqueProjectName(prefix);
     var origin = new FileDescription(dir, projectFileName, IProjectDocument.MimeType);
-    var cache = GetCacheFileDescription(projectFileName);
-    using (var file = _FileSystem.OpenWriteStream(origin)) file.Close();
-    // The host is returned live and owned by the caller: disposing it flushes the freshly written
-    // cache back to the origin.
-    var host = new ProjectHost(_FileSystem, origin, cache);
-    try
-    {
-      host.Project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(cache), projectName, token);
-      await Task.WhenAll(
-        host.Project.Metadata.SetProjectNameAsync(projectName, token),
-        host.Project.Metadata.SetProjectDescriptionAsync(projectDescription, token));
-    }
-    catch
-    {
-      await host.DisposeAsync();
-      throw;
-    }
+    var temp = GetCacheFileDescription(projectFileName);
+    using (var file = _FileSystem.OpenWriteStream(temp)) file.Close();
+    var tempPath = _FileSystem.ToPath(temp);
+    var project = await ProjectDocument.CreateNewAsync(tempPath, projectName, projectDescription, token);
+    await project.DisposeAsync();
+    _FileSystem.Move(temp, origin);
 
     InvalidateItems();
 
-    return host;
+    return await OpenAsync(origin, token);
   }
 
   public async Task<ProjectInfo> ImportAsync(Stream content, CancellationToken token)

@@ -166,7 +166,7 @@ public sealed class GedcomCharsetTests : IAsyncLifetime
 
     var path = Path.Combine(Path.GetTempPath(), $"gt4_charset_{Guid.NewGuid():N}.db");
     _paths.Add(path);
-    await using var document = await ProjectDocument.CreateNewAsync(path, "gedcom", Token);
+    await using var document = await ProjectDocument.CreateNewAsync(path, "gedcom", string.Empty, Token);
     using var reader = new StreamReader(new MemoryStream(bytes), cp1251);
     await _importer.ImportAsync(document, reader, Token);
 

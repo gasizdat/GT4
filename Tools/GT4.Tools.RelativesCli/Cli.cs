@@ -56,7 +56,8 @@ internal static class Cli
         }
         outPath ??= Path.Combine(Path.GetTempPath(), $"gt4_{Guid.NewGuid():N}.db");
 
-        document = await documentFactory.CreateNewAsync(outPath, Path.GetFileNameWithoutExtension(gedcomPath), token);
+        var projectName = Path.GetFileNameWithoutExtension(gedcomPath);
+        document = await documentFactory.CreateNewAsync(outPath, projectName, string.Empty, token);
         using (var reader = new StreamReader(gedcomPath, Encoding.UTF8))
         {
           await gedcomImporter.ImportAsync(document, reader, token, Path.GetDirectoryName(gedcomPath));

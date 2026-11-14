@@ -139,7 +139,7 @@ public sealed partial class HtmlExporterTests : IAsyncLifetime
   {
     var factory = new TestServices().Provider.GetRequiredService<IProjectDocumentFactory>();
     var projectPath = Path.Combine(_Folder, $"project{_Documents.Count}.gt4");
-    var document = await factory.CreateNewAsync(projectPath, "Smiths", Token);
+    var document = await factory.CreateNewAsync(projectPath, "Smiths", string.Empty, Token);
     _Documents.Add(document);
     var importer = new ServiceCollection().AddGedcom().BuildServiceProvider().GetRequiredService<IGedcomImporter>();
     using var reader = new StringReader(gedcom);

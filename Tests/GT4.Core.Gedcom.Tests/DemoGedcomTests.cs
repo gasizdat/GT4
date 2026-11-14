@@ -31,7 +31,7 @@ public sealed class DemoGedcomTests : IAsyncLifetime
 
   private async Task<ProjectDocument> ImportDemoAsync()
   {
-    var document = await ProjectDocument.CreateNewAsync(_path, "demo", Token);
+    var document = await ProjectDocument.CreateNewAsync(_path, "demo", string.Empty, Token);
     var assembly = Assembly.GetExecutingAssembly();
     var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith(".demo.ged", StringComparison.Ordinal));
     using var reader = new StreamReader(assembly.GetManifestResourceStream(name)!, Encoding.UTF8);

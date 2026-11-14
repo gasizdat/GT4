@@ -24,7 +24,7 @@ public sealed class ProjectDataReaderTests : IAsyncLifetime
 
   public async ValueTask InitializeAsync()
   {
-    _doc = await ProjectDocument.CreateNewAsync(_path, "reader-tests", TestContext.Current.CancellationToken);
+    _doc = await ProjectDocument.CreateNewAsync(_path, "reader-tests", string.Empty, TestContext.Current.CancellationToken);
   }
 
   public async ValueTask DisposeAsync()

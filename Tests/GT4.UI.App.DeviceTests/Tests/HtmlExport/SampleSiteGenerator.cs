@@ -61,7 +61,7 @@ public sealed class SampleSiteGenerator
 
     var projectName = UIStrings.TitleDemoProject;
     var factory = provider.GetRequiredService<IProjectDocumentFactory>();
-    await using var document = await factory.CreateNewAsync(projectPath, projectName, token);
+    await using var document = await factory.CreateNewAsync(projectPath, projectName, string.Empty, token);
     using (var stream = await FileSystem.OpenAppPackageFileAsync("demo.ged"))
     using (var reader = new StreamReader(stream, Encoding.UTF8))
     {
