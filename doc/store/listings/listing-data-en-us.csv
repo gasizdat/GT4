@@ -7,20 +7,24 @@ SEE HOW THE FAMILY FITS TOGETHER
 
 The family tree screen draws ancestors and descendants around one person as a tidy pedigree: children centred under their parents, each family drawn once. Click any relative to re-centre the tree on them. Pull in more generations upwards or downwards whenever you want, switch siblings and cousins on or off, zoom from a whole-tree overview down to a single branch, and drag the canvas to pan around it. Want it your way? Drag people into place, or right-click someone to hide them from the tree; the app remembers both for that project.
 
+Want a whole ancestry at a glance? The fan chart puts one person at the centre and each generation of ancestors in a ring around them, up to ten generations, drawn as a half, three-quarter or full circle. On either chart, hover over someone to see a card with their photo, name and life dates.
+
 A PAGE FOR EVERY PERSON
 
 Each person gets photos, a biography and attachments:
 
 - Photos, a main portrait plus as many additional photos as you like, each with its own caption, in a full-screen viewer.
+- Photo enhancement, while editing a person or a family, enlarge a small scan, colorize a black-and-white photo or repair scratches on any photo or image attachment. It runs on your own PC, and the result is added as a copy beside the original, marked as AI-made in its caption.
 - Biography, rich text with formatting, headings, lists and links, written with a formatting toolbar. Drop photos from the project straight into the text at the width you choose, or insert them as plain links.
-- Attachments, scans, certificates, PDFs, audio, anything, each with its own caption. Images open in the app's own viewer; everything else opens in whichever app you normally use for that file type.
+- Attachments, scans, certificates, PDFs, audio, anything, each with its own caption. Images show a thumbnail and open in the app's own viewer; everything else opens in whichever app you normally use for that file type.
 - Relatives, an expandable tree of everyone connected to this person, walked one branch at a time.
 
 THE TOOLS THAT SAVE THE AFTERNOON
 
 - Kinship finder, pick any two people and get the answer (""grand aunt"", ""cousin once removed"") and the full chain of relatives that connects them.
 - Date calendar, see who was born, who married and who is remembered on any day of the year, with round-number anniversaries flagged as milestones.
-- Statistics, over twenty measures of your project at a glance: how many people and families, men and women, average and longest lifespans, births by decade, the most common first names, average children per parent, and where your data is thin (missing birth dates, people with no photo, people with no relatives at all).
+- Date tools, convert a date between the Gregorian, Julian, Hebrew and French Republican calendars, or measure the time between two dates, each given in its own calendar.
+- Statistics, over twenty measures of your project at a glance: how many people and families, men and women, average and longest lifespans, births by decade, the most common first names, average children per parent, and where your data is thin (missing birth dates, people with no photo, people with no relatives at all). A single family has its own statistics page, too.
 - Filters, narrow any list by name (with * and ? wildcards), by sex or by year.
 - Gallery. every photo and attachment in the project in one place, each one linked back to the person or family it belongs to.
 - Names, one person can carry several names: first, patronymic, last and family. Edit them project-wide, and choose the order they display in.
@@ -30,7 +34,7 @@ BUILT FOR REAL GENEALOGICAL DATA
 - Dates you actually have. ""About 1816"" and ""unknown"" are first-class values, not blanks you have to fake.
 - GEDCOM 5.5.1 import and export. Bring a tree in from other genealogy software and take it out again. Tags Genealogy Tree doesn't model natively are carried through the round trip rather than silently dropped, and so are family photos and attachments. If a file declares an ambiguous character set, the app asks which codepage it was written in instead of mangling every name in it.
 - Share it as a website. Export the whole project as a self-contained HTML site, with a page for every person and family, that opens in any browser without the app.
-- Read dates in your calendar. View every date in the Gregorian, Julian, Hebrew or French Republican calendar; switch anytime, without changing how anything is stored.
+- Dates in your calendar. View every date in the Gregorian, Julian, Hebrew or French Republican calendar; switch anytime, without changing how anything is stored. Found a date in an old record? Enter it in its original calendar and the app converts it.
 - Multiple projects. Keep separate trees for separate branches, or a scratch tree next to the real one.
 - Restore points. Earlier working copies of a project are kept, so a session that ends badly is something you roll back from, not something you lose.
 

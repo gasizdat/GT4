@@ -43,7 +43,7 @@ family calendar. No account, no cloud.
 
 ## Description (≤10,000 chars)
 
-*About 5,060 characters once the source line wraps below are unwrapped into
+*About 5,990 characters once the source line wraps below are unwrapped into
 single spaces, counting the `###` and `-` markers. Well inside the 10,000
 limit; see the Play appendix, where it matters.*
 
@@ -67,18 +67,27 @@ zoom from a whole-tree overview down to a single branch, and drag the canvas to
 pan around it. Want it your way? Drag people into place, or right-click someone
 to hide them from the tree; the app remembers both for that project.
 
+Want a whole ancestry at a glance? The fan chart puts one person at the centre
+and each generation of ancestors in a ring around them, up to ten generations,
+drawn as a half, three-quarter or full circle. On either chart, hover over
+someone to see a card with their photo, name and life dates.
+
 ### A page for every person
 
 Each person gets photos, a biography and attachments:
 
 - **Photos** — a main portrait plus as many additional photos as you like, each
   with its own caption, in a full-screen viewer.
+- **Photo enhancement** — while editing a person or a family, enlarge a small
+  scan, colorize a black-and-white photo or repair scratches on any photo or
+  image attachment. It runs on your own PC, and the result is added as a copy
+  beside the original, marked as AI-made in its caption.
 - **Biography** — rich text with formatting, headings, lists and links, written
   with a formatting toolbar. Drop photos from the project straight into the
   text at the width you choose, or insert them as plain links.
 - **Attachments** — scans, certificates, PDFs, audio, anything, each with its own
-  caption. Images open in the app's own viewer; everything else opens in
-  whichever app you normally use for that file type.
+  caption. Images show a thumbnail and open in the app's own viewer; everything
+  else opens in whichever app you normally use for that file type.
 - **Relatives** — an expandable tree of everyone connected to this person,
   walked one branch at a time.
 
@@ -88,11 +97,14 @@ Each person gets photos, a biography and attachments:
   "cousin once removed") *and* the full chain of relatives that connects them.
 - **Date calendar** — see who was born, who married and who is remembered on
   any day of the year, with round-number anniversaries flagged as milestones.
+- **Date tools** — convert a date between the Gregorian, Julian, Hebrew and
+  French Republican calendars, or measure the time between two dates, each
+  given in its own calendar.
 - **Statistics** — over twenty measures of your project at a glance: how many
   people and families, men and women, average and longest lifespans, births by
   decade, the most common first names, average children per parent, and where
   your data is thin (missing birth dates, people with no photo, people with no
-  relatives at all).
+  relatives at all). A single family has its own statistics page, too.
 - **Filters** — narrow any list by name (with `*` and `?` wildcards), by sex or
   by year.
 - **Gallery** — every photo and attachment in the project in one place, each
@@ -112,9 +124,10 @@ Each person gets photos, a biography and attachments:
 - **Share it as a website.** Export the whole project as a self-contained HTML
   site, with a page for every person and family, that opens in any browser
   without the app.
-- **Read dates in your calendar.** View every date in the Gregorian, Julian,
+- **Dates in your calendar.** View every date in the Gregorian, Julian,
   Hebrew or French Republican calendar — switch anytime, without changing how
-  anything is stored.
+  anything is stored. Found a date in an old record? Enter it in its original
+  calendar and the app converts it.
 - **Multiple projects.** Keep separate trees for separate branches, or a
   scratch tree next to the real one.
 - **Restore points.** Earlier working copies of a project are kept, so a session
@@ -256,7 +269,7 @@ permissions declaration, given the app itself reads only its project files.
 **Short description:** Your family tree, offline and private. GEDCOM in and
 out, photos, kinship tools. (80 chars)
 
-**Full description:** the Description above is about 5,060 characters against
+**Full description:** the Description above is about 5,990 characters against
 Play's 4,000 limit, so it no longer fits as-is and a section has to be cut, not
 just trimmed. Play
 also renders no rich text, so the `###` and `**` markers have to go and
