@@ -46,6 +46,7 @@ says which came from which.
 | Export the whole project as a self-contained HTML site, a page per person and family | `UI/App/HtmlExport/HtmlExporter.cs` writes a zipped static site from `UI/App/Resources/HtmlTemplates` (PRs #462, #464, #477, #478, #481). **Self-contained** was checked: the templates load only their own `style.css` and an inline script, and the one URL in them is the SVG namespace inside a `data:` URI. A biography's own web links and web images are carried into the site as written, which is user content, not something the export adds. The zip is built in the app's cache and handed to the OS share sheet (`ProjectPage.OnExportHtml`), so it goes wherever the user sends it. The export asks for confirmation first because it includes living people |
 | GEDCOM import pairs a Russian surname's male and female forms under one family | `Core/Gedcom/GedcomFamilyName.cs`, `GedcomImporter` (PR #480, issue #479). Cyrillic surnames whose gendered ending agrees with `SEX` only; Latin script and invariant surnames keep the bare-surname family. Not claimed in the Description, only in What's new |
 | Multiple projects, each a file in Documents | `Core/Utils/Storage.cs` — `ProjectsRoot` is `SpecialFolder.MyDocuments\GT4`; `ProjectList` scans it for `*.gt4` |
+| Everything stays on your computer; projects are files in Documents | Only the projects are in Documents. The same `Storage.cs` puts the working-copy cache, settings and models under `SpecialFolder.ApplicationData` (`.cache`, `.config`, `.models`), crash logs go to `ApplicationData\GT4\CrashLogs` (`App.xaml.cs`), and exports are staged in `FileSystem.CacheDirectory`. All of it is local, which the privacy policy's "What the app stores, and where" spells out. So never say "everything lives in your Documents folder", which the listing said until November 2026 |
 | Built-in Brontë demo tree | `ProjectListPage.OnOpenDemoProject` imports `demo.ged`; `UIStrings.TitleDemoProject` = "Brontë Family (Demo)". **Offered only when the project list is empty** (`IsEmptyStateVisible`) |
 | No account, no cloud, no analytics | No auth or sync code anywhere; no analytics/telemetry package in any `.csproj` (checked AppCenter, Sentry, Application Insights). The listing's phrasing is "no account system, no cloud sync, no analytics and no ads" |
 
@@ -80,8 +81,8 @@ release:
 So "works offline, nothing is sent anywhere" is true of the app's own behaviour,
 and the listing says so in that form — *"The only times the app reaches the
 internet are when you put a web link or a web image into a biography and then
-open it, and when you agree to download a photo enhancement model on Windows.
-Photos are enhanced on your device and never leave it."* Do not shorten this to
+open it, and when you agree to download a photo enhancement model. Photos are
+enhanced on your device and never leave it."* Do not shorten this to
 a flat "no internet access": the manifest says otherwise, and a reviewer can
 read the manifest.
 

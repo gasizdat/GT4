@@ -1,7 +1,7 @@
 Field,ID,Type (Type),default,en-us
-Description,2,Text,,"Genealogy Tree keeps your family history where it belongs: on your own computer. There is no account to create, no server to sync with and no subscription. A project is a single file you can copy, back up or move like any other document, and the app never sends anything about your family anywhere.
+Description,2,Text,,"Genealogy Tree keeps your family history where it belongs: on your own computer. There is no account to create, no server to sync with and no subscription. A project is a single file you can copy, back up or move like any other document — and the app never sends anything about your family anywhere.
 
-Start in a minute, not an afternoon. New here? Open the built-in demo tree - a small, real genealogy of the Brontë family, complete with portraits and biographies, and click around before you type a single name. Already have research elsewhere? Import a GEDCOM file and your tree is there.
+Start in a minute, not an afternoon. New here? Open the built-in demo tree — a small, real genealogy of the Brontë family, complete with portraits and biographies — and click around before you type a single name. Already have research elsewhere? Import a GEDCOM file and your tree is there.
 
 SEE HOW THE FAMILY FITS TOGETHER
 
@@ -13,28 +13,28 @@ A PAGE FOR EVERY PERSON
 
 Each person gets photos, a biography and attachments:
 
-- Photos, a main portrait plus as many additional photos as you like, each with its own caption, in a full-screen viewer.
-- Photo enhancement, while editing a person or a family, enlarge a small scan, colorize a black-and-white photo or repair scratches on any photo or image attachment. It runs on your own PC, and the result is added as a copy beside the original, marked as AI-made in its caption.
-- Biography, rich text with formatting, headings, lists and links, written with a formatting toolbar. Drop photos from the project straight into the text at the width you choose, or insert them as plain links.
-- Attachments, scans, certificates, PDFs, audio, anything, each with its own caption. Images show a thumbnail and open in the app's own viewer; everything else opens in whichever app you normally use for that file type.
-- Relatives, an expandable tree of everyone connected to this person, walked one branch at a time.
+- Photos — a main portrait plus as many additional photos as you like, each with its own caption, in a full-screen viewer.
+- Photo enhancement — while editing a person or a family, enlarge a small scan, colorize a black-and-white photo or repair scratches on any photo or image attachment. It runs on your own PC, and the result is added as a copy beside the original, marked as AI-made in its caption.
+- Biography — rich text with formatting, headings, lists and links, written with a formatting toolbar. Drop photos from the project straight into the text at the width you choose, or insert them as plain links.
+- Attachments — scans, certificates, PDFs, audio, anything, each with its own caption. Images show a thumbnail and open in the app's own viewer; everything else opens in whichever app you normally use for that file type.
+- Relatives — an expandable tree of everyone connected to this person, walked one branch at a time.
 
 THE TOOLS THAT SAVE THE AFTERNOON
 
-- Kinship finder, pick any two people and get the answer (""grand aunt"", ""cousin once removed"") and the full chain of relatives that connects them.
-- Date calendar, see who was born, who married and who is remembered on any day of the year, with round-number anniversaries flagged as milestones.
-- Date tools, convert a date between the Gregorian, Julian, Hebrew and French Republican calendars, or measure the time between two dates, each given in its own calendar.
-- Statistics, over twenty measures of your project at a glance: how many people and families, men and women, average and longest lifespans, births by decade, the most common first names, average children per parent, and where your data is thin (missing birth dates, people with no photo, people with no relatives at all). A single family has its own statistics page, too.
-- Filters, narrow any list by name (with * and ? wildcards), by sex or by year.
-- Gallery. every photo and attachment in the project in one place, each one linked back to the person or family it belongs to.
-- Names, one person can carry several names: first, patronymic, last and family. Edit them project-wide, and choose the order they display in.
+- Kinship finder — pick any two people and get the answer (""grand aunt"", ""cousin once removed"") and the full chain of relatives that connects them.
+- Date calendar — see who was born, who married and who is remembered on any day of the year, with round-number anniversaries flagged as milestones.
+- Date tools — convert a date between the Gregorian, Julian, Hebrew and French Republican calendars, or measure the time between two dates, each given in its own calendar.
+- Statistics — over twenty measures of your project at a glance: how many people and families, men and women, average and longest lifespans, births by decade, the most common first names, average children per parent, and where your data is thin (missing birth dates, people with no photo, people with no relatives at all). A single family has its own statistics page, too.
+- Filters — narrow any list by name (with * and ? wildcards), by sex or by year.
+- Gallery — every photo and attachment in the project in one place, each one linked back to the person or family it belongs to.
+- Names — one person can carry several names: first, patronymic, last and family. Edit them project-wide, and choose the order they display in.
 
 BUILT FOR REAL GENEALOGICAL DATA
 
 - Dates you actually have. ""About 1816"" and ""unknown"" are first-class values, not blanks you have to fake.
 - GEDCOM 5.5.1 import and export. Bring a tree in from other genealogy software and take it out again. Tags Genealogy Tree doesn't model natively are carried through the round trip rather than silently dropped, and so are family photos and attachments. If a file declares an ambiguous character set, the app asks which codepage it was written in instead of mangling every name in it.
 - Share it as a website. Export the whole project as a self-contained HTML site, with a page for every person and family, that opens in any browser without the app.
-- Dates in your calendar. View every date in the Gregorian, Julian, Hebrew or French Republican calendar; switch anytime, without changing how anything is stored. Found a date in an old record? Enter it in its original calendar and the app converts it.
+- Dates in your calendar. View every date in the Gregorian, Julian, Hebrew or French Republican calendar — switch anytime, without changing how anything is stored. Found a date in an old record? Enter it in its original calendar and the app converts it.
 - Multiple projects. Keep separate trees for separate branches, or a scratch tree next to the real one.
 - Restore points. Earlier working copies of a project are kept, so a session that ends badly is something you roll back from, not something you lose.
 
@@ -48,7 +48,7 @@ Available in English, Russian, German, Spanish and French.
 
 YOUR DATA, YOUR DEVICE
 
-Genealogy Tree has no account system, no cloud sync, no analytics and no ads. Everything lives in your Documents folder. The only times the app reaches the internet are when you put a web link or a web image into a biography and then open it, and when you agree to download a photo enhancement model on Windows. Photos are enhanced on your device and never leave it."
+Genealogy Tree has no account system, no cloud sync, no analytics and no ads. Everything stays on your computer, and your projects are files in your Documents folder. The only times the app reaches the internet are when you put a web link or a web image into a biography and then open it, and when you agree to download a photo enhancement model. Photos are enhanced on your device and never leave it."
 ReleaseNotes,3,Text,,"New
 
 - Enhance photos on your own PC: enlarge a small scan, colorize a black-and-white photo or repair scratches. It is offered on every photo and image attachment, and the result is saved as a captioned copy beside the original. Each step downloads its model once, after asking.
@@ -105,7 +105,7 @@ DesktopScreenshot27,126,Relative path (or URL to file in Partner Center),,
 DesktopScreenshot28,127,Relative path (or URL to file in Partner Center),,
 DesktopScreenshot29,128,Relative path (or URL to file in Partner Center),,
 DesktopScreenshot30,129,Relative path (or URL to file in Partner Center),,
-DesktopScreenshotCaption1,150,Text,,"Ancestors and descendants around one person, click any relative to re-centre"
+DesktopScreenshotCaption1,150,Text,,"Ancestors and descendants around one person — click any relative to re-centre"
 DesktopScreenshotCaption2,151,Text,,"Every person gets portraits, life dates and their whole circle of relatives"
 DesktopScreenshotCaption3,152,Text,,"Write a real biography: headings, lists, emphasis and links"
 DesktopScreenshotCaption4,153,Text,,"How are these two related? The answer, and the chain that connects them"
@@ -369,7 +369,7 @@ XboxFeaturedPromo1080x1080,610,Relative path (or URL to file in Partner Center),
 OptionalPromo358x358,611,Relative path (or URL to file in Partner Center),,
 OptionalPromo1000x800,612,Relative path (or URL to file in Partner Center),,
 OptionalPromo414x180,613,Relative path (or URL to file in Partner Center),,
-Feature1,700,Text,,"Scalable, pannable family tree of ancestors and descendants, re-centred on any relative with a click, more generations on demand"
+Feature1,700,Text,,"Zoomable, pannable family tree of ancestors and descendants, re-centred on any relative with a click, more generations on demand"
 Feature2,701,Text,,"Drag people into place on the tree or hide them from it, remembered per project"
 Feature3,702,Text,,"Fan chart of a person's ancestors, up to ten generations in a half, three-quarter or full circle, re-centred on any ancestor with a click"
 Feature4,703,Text,,"Person pages with a main portrait, extra photos, a formatted biography and file attachments, each photo and file captioned"
@@ -380,7 +380,7 @@ Feature8,707,Text,,"Date tools: convert a date between the Gregorian, Julian, He
 Feature9,708,Text,,"Over twenty project statistics: lifespans, births by decade, common names, where your data is incomplete; or statistics for one family alone"
 Feature10,709,Text,,"Project-wide gallery of every photo and attachment, linked back to its person or family"
 Feature11,710,Text,,"Filter any list by name with * and ? wildcards, by sex, or by year"
-Feature12,711,Text,,"Several names per person: first, patronymic, last, family - in a display order you choose"
+Feature12,711,Text,,"Several names per person — first, patronymic, last, family — in a display order you choose"
 Feature13,712,Text,,"Approximate and unknown dates are first-class, and dates can be entered and displayed in the Gregorian, Julian, Hebrew or French Republican calendar"
 Feature14,713,Text,,"GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included, and asks about an ambiguous character set instead of guessing"
 Feature15,714,Text,,"Export or import a whole project as a single .gt4 file, opening with a double-click once associated on Windows"

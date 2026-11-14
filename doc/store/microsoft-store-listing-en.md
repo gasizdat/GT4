@@ -15,9 +15,10 @@ plain-text style (see the note below).
 **Partner Center's Description field does not render Markdown.** A live
 export confirmed it: `###` headings and `**bold**` markers both came back as
 literal characters, so the checked-in CSV uses ALL-CAPS section headings and
-plain punctuation instead (an em dash becomes a comma or semicolon; a
-`**Label**` lead-in becomes `Label,`). Match that style in the CSV even though
-this file keeps Markdown for its own readability.
+drops the `**`, `*` and backtick markers. Every other character carries over
+as written: the live November 2026 listing renders em dashes and "Brontë"
+intact. Match that style in the CSV even though this file keeps Markdown for
+its own readability.
 
 Character limits below are Microsoft's published limits as of this writing —
 re-check them in Partner Center before pasting, since Microsoft revises them.
@@ -149,10 +150,11 @@ Available in **English, Russian, German, Spanish and French**.
 ### Your data, your device
 
 Genealogy Tree has no account system, no cloud sync, no analytics and no ads.
-Everything lives in your Documents folder. The only times the app reaches the
-internet are when *you* put a web link or a web image into a biography and then
-open it, and when you agree to download a photo enhancement model on Windows.
-Photos are enhanced on your device and never leave it.
+Everything stays on your computer, and your projects are files in your
+Documents folder. The only times the app reaches the internet are when *you*
+put a web link or a web image into a biography and then open it, and when you
+agree to download a photo enhancement model. Photos are enhanced on your device
+and never leave it.
 
 ## Features (≤200 chars each, up to 20 entries)
 
@@ -273,9 +275,10 @@ out, photos, kinship tools. (80 chars)
 Play's 4,000 limit, so it no longer fits as-is and a section has to be cut, not
 just trimmed. Play
 also renders no rich text, so the `###` and `**` markers have to go and
-whatever you put in their place counts too. Three edits are needed regardless:
+whatever you put in their place counts too. Four edits are needed regardless:
 replace the Ctrl + plus / minus / 0 shortcut with the pinch-to-zoom gesture
-Android uses for the same thing, drop the "on your own computer" framing in
-the opening line, which reads oddly on a phone, and drop the right-click
-claims (copying text, hiding someone from the tree), which have no Android
-gesture yet.
+Android uses for the same thing, drop the "your computer" framing in the
+opening line and the closing section, which reads oddly on a phone, drop the
+right-click claims (copying text, hiding someone from the tree), which have no
+Android gesture yet, and drop photo enhancement and its model download, which
+are Windows only.
