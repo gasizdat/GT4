@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton<IRelationshipTypeFormatter, RelationshipTypeFormatter>()
       .AddSingleton<INameTypeFormatter, NameTypeFormatter>()
       .AddSingleton<IBiologicalSexFormatter, BiologicalSexFormatter>()
+      .AddSingleton<IBirthCohortFormatter, BirthCohortFormatter>()
       .AddSingleton<INavigationService, NavigationService>()
       .AddSingleton<MainPersonResolver>()
       .AddSingleton<LanguageSetting>()

@@ -20,9 +20,10 @@ It is opened from PersonPage's and FamilyTreePage's menus.
   weight, and the centre's ring thickens as on FamilyTreePage. Fills stay as they are. The outline's
   translucent colour lies over the segment's own stroke, so the hovered line reads a shade stronger
   than the plain one.
-- The hovered person (`HoveredPerson`) also shows in a `PersonCardView`: their photo, full name and
-  life dates, in a card stacked under the "More ancestors" button. A portrait phone has no room for
-  it beside the button. The card is input-transparent, so the pointer reaches the chart under it.
+- The hovered person (`HoveredPerson`) also shows in a `PersonCardView`: their photo, full name, life
+  dates and birth cohort, in a card stacked under the "More ancestors" button. A portrait phone has
+  no room for it beside the button. The card is input-transparent, so the pointer reaches the chart
+  under it.
 - Touch has no hover, so on Android a held finger stands in for the pointer: `TouchHold` resolves the
   hold through `HoverAt` and the lift (`PointerReleased`) clears it. The lift raises no tap, so a hold
   never re-centres. A finger that rests before it moves holds instead of panning. iOS has neither.
