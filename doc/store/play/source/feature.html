@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Feature graphic</title>
+<style>
+@font-face { font-family: OpenSans; src: url("../../../../UI/App/Resources/Fonts/OpenSans-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: OpenSans; src: url("../../../../UI/App/Resources/Fonts/OpenSans-Semibold.ttf"); font-weight: 600; }
+html, body { margin: 0; width: 1024px; height: 500px; overflow: hidden; }
+body {
+  background: radial-gradient(circle at 78% 40%, #2c5e4c 0%, #1E4437 55%, #163329 100%);
+  font-family: OpenSans, sans-serif; color: #fff; position: relative;
+}
+.tree { position: absolute; right: 0; top: 0; }
+.mark { position: absolute; left: 88px; top: 130px; width: 240px; height: 240px; border-radius: 48px;
+  background: #1E4437; box-shadow: 0 18px 40px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.12); overflow: hidden; }
+.text { position: absolute; left: 380px; top: 150px; }
+h1 { margin: 0; font-weight: 600; font-size: 66px; line-height: 1.05; letter-spacing: -0.5px; }
+p.tag { margin: 18px 0 0; font-size: 30px; color: #d5e8df; }
+p.sub { margin: 26px 0 0; font-size: 21px; color: #a9cbbd; letter-spacing: .3px; }
+</style></head>
+<body>
+<svg class="tree" width="1024" height="500" viewBox="0 0 1024 500" fill="none" stroke="#ffffff" stroke-opacity=".07" stroke-width="3">
+  <path d="M760 470 V380 M760 380 H640 V300 M760 380 H880 V300
+           M640 300 H580 V220 M640 300 H700 V220 M880 300 H820 V220 M880 300 H940 V220
+           M580 220 H550 V140 M580 220 H610 V140 M700 220 H670 V140 M700 220 H730 V140
+           M820 220 H790 V140 M820 220 H850 V140 M940 220 H910 V140 M940 220 H970 V140"/>
+  <g fill="#ffffff" fill-opacity=".07" stroke="none">
+    <circle cx="760" cy="470" r="9"/><circle cx="640" cy="300" r="9"/><circle cx="880" cy="300" r="9"/>
+    <circle cx="580" cy="220" r="8"/><circle cx="700" cy="220" r="8"/><circle cx="820" cy="220" r="8"/><circle cx="940" cy="220" r="8"/>
+    <circle cx="550" cy="140" r="7"/><circle cx="610" cy="140" r="7"/><circle cx="670" cy="140" r="7"/><circle cx="730" cy="140" r="7"/>
+    <circle cx="790" cy="140" r="7"/><circle cx="850" cy="140" r="7"/><circle cx="910" cy="140" r="7"/><circle cx="970" cy="140" r="7"/>
+  </g>
+</svg>
+<div class="mark"><img src="../../../../UI/App/Resources/AppIcon/appicon.svg" width="240" height="240" alt=""></div>
+<div class="text">
+  <h1>Genealogy Tree</h1>
+  <p class="tag">Your family tree, offline and private</p>
+  <p class="sub">GEDCOM in and out &middot; Photos &middot; Kinship tools</p>
+</div>
+</body></html>
