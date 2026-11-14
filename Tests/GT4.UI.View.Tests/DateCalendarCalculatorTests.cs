@@ -197,7 +197,7 @@ public class DateCalendarCalculatorTests
     var yearOnlyDeath = Person(5, birthDate: WellKnown(1900, 1, 1), deathDate: MonthUnknown(1970));
 
     var count = DateCalendarCalculator.CountUnplaceable(
-      [noDataAtAll, yearOnlyBirth, approximateBirth, livingPerson, yearOnlyDeath], NoRelatives);
+      [noDataAtAll, yearOnlyBirth, approximateBirth, livingPerson, yearOnlyDeath]);
 
     Assert.Equal(3, count);
   }
