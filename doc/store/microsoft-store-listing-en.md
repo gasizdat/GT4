@@ -43,7 +43,7 @@ family calendar. No account, no cloud.
 
 ## Description (≤10,000 chars)
 
-*About 4,940 characters once the source line wraps below are unwrapped into
+*About 5,990 characters once the source line wraps below are unwrapped into
 single spaces, counting the `###` and `-` markers. Well inside the 10,000
 limit; see the Play appendix, where it matters.*
 
@@ -67,18 +67,27 @@ zoom from a whole-tree overview down to a single branch, and drag the canvas to
 pan around it. Want it your way? Drag people into place, or right-click someone
 to hide them from the tree; the app remembers both for that project.
 
+Want a whole ancestry at a glance? The fan chart puts one person at the centre
+and each generation of ancestors in a ring around them, up to ten generations,
+drawn as a half, three-quarter or full circle. On either chart, hover over
+someone to see a card with their photo, name and life dates.
+
 ### A page for every person
 
 Each person gets photos, a biography and attachments:
 
 - **Photos** — a main portrait plus as many additional photos as you like, each
   with its own caption, in a full-screen viewer.
+- **Photo enhancement** — while editing a person or a family, enlarge a small
+  scan, colorize a black-and-white photo or repair scratches on any photo or
+  image attachment. It runs on your own PC, and the result is added as a copy
+  beside the original, marked as AI-made in its caption.
 - **Biography** — rich text with formatting, headings, lists and links, written
   with a formatting toolbar. Drop photos from the project straight into the
   text at the width you choose, or insert them as plain links.
 - **Attachments** — scans, certificates, PDFs, audio, anything, each with its own
-  caption. Images open in the app's own viewer; everything else opens in
-  whichever app you normally use for that file type.
+  caption. Images show a thumbnail and open in the app's own viewer; everything
+  else opens in whichever app you normally use for that file type.
 - **Relatives** — an expandable tree of everyone connected to this person,
   walked one branch at a time.
 
@@ -88,11 +97,14 @@ Each person gets photos, a biography and attachments:
   "cousin once removed") *and* the full chain of relatives that connects them.
 - **Date calendar** — see who was born, who married and who is remembered on
   any day of the year, with round-number anniversaries flagged as milestones.
+- **Date tools** — convert a date between the Gregorian, Julian, Hebrew and
+  French Republican calendars, or measure the time between two dates, each
+  given in its own calendar.
 - **Statistics** — over twenty measures of your project at a glance: how many
   people and families, men and women, average and longest lifespans, births by
   decade, the most common first names, average children per parent, and where
   your data is thin (missing birth dates, people with no photo, people with no
-  relatives at all).
+  relatives at all). A single family has its own statistics page, too.
 - **Filters** — narrow any list by name (with `*` and `?` wildcards), by sex or
   by year.
 - **Gallery** — every photo and attachment in the project in one place, each
@@ -112,9 +124,10 @@ Each person gets photos, a biography and attachments:
 - **Share it as a website.** Export the whole project as a self-contained HTML
   site, with a page for every person and family, that opens in any browser
   without the app.
-- **Read dates in your calendar.** View every date in the Gregorian, Julian,
+- **Dates in your calendar.** View every date in the Gregorian, Julian,
   Hebrew or French Republican calendar — switch anytime, without changing how
-  anything is stored.
+  anything is stored. Found a date in an old record? Enter it in its original
+  calendar and the app converts it.
 - **Multiple projects.** Keep separate trees for separate branches, or a
   scratch tree next to the real one.
 - **Restore points.** Earlier working copies of a project are kept, so a session
@@ -136,34 +149,35 @@ Available in **English, Russian, German, Spanish and French**.
 ### Your data, your device
 
 Genealogy Tree has no account system, no cloud sync, no analytics and no ads.
-Everything lives in your Documents folder. The only time the app reaches the
-internet at all is when *you* put a web link or a web image into a biography and
-then open it.
+Everything lives in your Documents folder. The only times the app reaches the
+internet are when *you* put a web link or a web image into a biography and then
+open it, and when you agree to download a photo enhancement model on Windows.
+Photos are enhanced on your device and never leave it.
 
 ## Features (≤200 chars each, up to 20 entries)
 
-*20 entries; the longest is 134 characters.*
+*20 entries; the longest is 184 characters.*
 
 
 - Zoomable, pannable family tree of ancestors and descendants, re-centred on any relative with a click, more generations on demand
 - Drag people into place on the tree or hide them from it, remembered per project
+- Fan chart of a person's ancestors, up to ten generations in a half, three-quarter or full circle, re-centred on any ancestor with a click
 - Person pages with a main portrait, extra photos, a formatted biography and file attachments, each photo and file captioned
+- Photo enhancement on your own PC: enlarge a small scan, colorize a black-and-white photo or repair scratches, saved as a copy beside the original
 - Kinship finder: the relationship between any two people, plus the full chain of relatives connecting them
 - Date calendar of births, wedding anniversaries and remembrances, with milestone years highlighted
-- Over twenty project statistics: lifespans, births by decade, common names, and where your data is incomplete
+- Date tools: convert a date between the Gregorian, Julian, Hebrew and French Republican calendars, and measure the time between two dates
+- Over twenty project statistics: lifespans, births by decade, common names, where your data is incomplete; or statistics for one family alone
 - Project-wide gallery of every photo and attachment, linked back to its person or family
 - Filter any list by name with * and ? wildcards, by sex, or by year
 - Several names per person — first, patronymic, last, family — in a display order you choose
-- Approximate and unknown dates are first-class, and any date can display in the Gregorian, Julian, Hebrew or French Republican calendar
-- GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included
-- Ambiguous GEDCOM character sets are resolved by asking, not by guessing
+- Approximate and unknown dates are first-class, and dates can be entered and displayed in the Gregorian, Julian, Hebrew or French Republican calendar
+- GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included, and asks about an ambiguous character set instead of guessing
 - Export or import a whole project as a single .gt4 file, opening with a double-click once associated on Windows
 - Export the whole project as a self-contained HTML website, a page for every person and family
 - Mark a project's main person to open straight to them, or switch to read-only mode to browse without editing
-- Multiple independent projects, each a single file in your Documents folder, with restore points to roll back to
-- Light, dark or system theme, and app-wide text scaling with Ctrl + plus / minus / 0
-- Built-in Brontë family demo tree to explore before you start your own
-- Interface in English, Russian, German, Spanish and French
+- Multiple independent projects, each a single file in your Documents folder, with restore points to roll back to, and a built-in Brontë family demo tree to explore first
+- Light, dark or system theme, app-wide text scaling with Ctrl + plus / minus / 0, and an interface in English, Russian, German, Spanish and French
 - No account, no cloud sync, no subscription, no ads, no analytics
 
 ## Search terms
@@ -181,32 +195,34 @@ verify the current limit and trim from the bottom if needed.*
 
 ## What's new in this version
 
+*Partner Center caps this field at 1,500 characters; the CSV's plain-text
+version is what counts against it.*
+
 **New**
-- Export the whole project as an HTML website: a page for every person and
-  family, a main-person page with the family tree, and full-size photo previews.
-- The family tree is laid out as a tidy pedigree, with children centred under
-  their parents.
-- Drag people into place on the family tree, or right-click to hide someone
-  from it; both are remembered per project.
-- Hovering a person on the tree highlights them and their lines.
-- Captions for a person's photos and attachments.
-- The biography editor has formatting buttons (bold, italic, heading, list),
-  and its toolbar stays in view on a long biography.
-- Insert a photo into a biography as a picture at a chosen width, or as a plain
-  link.
-- Image attachments, and images in a biography, open in the app's own photo
-  viewer.
-- Right-click a person's name, dates or biography to copy it.
-- GEDCOM import keeps a Russian surname's male and female forms under one
-  family.
-- Gallery items open with a single click, sort by title, and search matches
-  titles and file names.
+- Enhance photos on your own PC: enlarge a small scan, colorize a
+  black-and-white photo or repair scratches. It is offered on every photo and
+  image attachment, and the result is saved as a captioned copy beside the
+  original. Each step downloads its model once, after asking.
+- A fan chart of a person's ancestors: up to ten generations in a half,
+  three-quarter or full circle.
+- Date tools: convert a date between the Gregorian, Julian, Hebrew and French
+  Republican calendars, and measure the time between two dates.
+- Enter a date in its original calendar in the date dialog; the app converts
+  it.
+- Hovering a person on the family tree or the fan chart shows a card with their
+  photo, name and life dates, plus their generation (such as Baby Boomers) for
+  anyone born since 1883.
+- Statistics for a single family, from the family's page.
+- Image attachments show a thumbnail, which opens the photo viewer.
+- With another calendar chosen, a partial date shows its year in that calendar.
 
 **Fixed**
-- A biography typed while creating a new person was lost on save.
-- The editor could freeze on a long biography with many pictures.
-- Closing a photo preview could jump to a different person.
-- A crash in the Settings calendar preview on 29 February.
+- Changing an approximate date could drop its "about".
+- A GEDCOM export could point a godparent or witness link at the wrong person.
+- Rotated phone photos had sideways thumbnails, and the wrong proportions in a
+  biography or an exported website.
+- Ages and other date spans could be a day or two off around a month's end.
+- Copying text could fail while the clipboard was briefly busy.
 
 ## Before submitting
 
@@ -253,7 +269,7 @@ permissions declaration, given the app itself reads only its project files.
 **Short description:** Your family tree, offline and private. GEDCOM in and
 out, photos, kinship tools. (80 chars)
 
-**Full description:** the Description above is about 4,940 characters against
+**Full description:** the Description above is about 5,990 characters against
 Play's 4,000 limit, so it no longer fits as-is and a section has to be cut, not
 just trimmed. Play
 also renders no rich text, so the `###` and `**` markers have to go and
