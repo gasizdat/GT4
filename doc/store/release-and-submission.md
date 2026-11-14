@@ -340,7 +340,7 @@ hides existing projects from the app (Android stops treating the files in
 `Documents/GT4` as the app's own; Import brings them back), so the practical
 check of the uploaded bundle itself is the closed-testing install from Play.
 
-**The first Android release** (November 2026) was version code 855, built from
+**The first Android release** (November 2026) is version code 855, built from
 `release/rc-nov-14` at `0438bf54` (master `f2e6392a` merged in). The same day
 the Android device-test leg (`run-android-device-tests.ps1`) passed on that
 commit on a Samsung SM-A736B (Android 16): 867 tests, 864 passed, 0 failed, 3

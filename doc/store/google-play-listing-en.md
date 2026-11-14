@@ -120,10 +120,10 @@ No location sharing, no digital purchases, no built-in web browser (a biography
 link opens the system browser). Expect Everyone / PEGI 3, matching the Store's
 3+.
 
-**Target audience and content** — pick 18 and over. The app suits any age, but
-naming an under-13 group brings the app under Play's Families policy, which
-adds review requirements and buys nothing here. The field doesn't stop anyone
-younger installing it.
+**Target audience and content** — pick only age groups of 13 and over (18 and
+over alone is simplest). The app suits any age, but naming an under-13 group
+brings the app under Play's Families policy, which adds review requirements and
+buys nothing here. The field doesn't stop anyone younger installing it.
 
 **Data safety** — "Does your app collect or share any of the required user data
 types?" **No.** Play counts data as collected when the app transmits it off the

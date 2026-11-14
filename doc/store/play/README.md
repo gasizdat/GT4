@@ -41,8 +41,9 @@ alpha) are rendered from [source/icon.html](source/icon.html) and
 
 ```powershell
 $edge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+# a throwaway profile keeps headless Edge from handing off to a running Edge
 & $edge --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 `
-  --allow-file-access-from-files --window-size=1024,500 `
+  --user-data-dir="$env:TEMP\edge-render" --allow-file-access-from-files --window-size=1024,500 `
   --screenshot="$PWD\feature-graphic.png" "file:///$($PWD -replace '\\','/')/source/feature.html"
 ```
 
