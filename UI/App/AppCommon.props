@@ -35,8 +35,10 @@
 	  <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
-  <!-- Derive build number from the checked-out commit's ancestor count -->
-  <Target Name="SetBuildNumber" BeforeTargets="PrepareForBuild">
+  <!-- Derive build number from the checked-out commit's ancestor count. The Android SDK copies
+       ApplicationVersion into the manifest's version code in _GetAndroidPackageName, which runs
+       ahead of PrepareForBuild. -->
+  <Target Name="SetBuildNumber" BeforeTargets="PrepareForBuild;_GetAndroidPackageName">
     <Exec Command="git rev-list --count HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low">
       <Output TaskParameter="ConsoleOutput" ItemName="GitCommitCount" />
     </Exec>
