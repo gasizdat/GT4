@@ -28,7 +28,9 @@ opened demo project, and each one's header names it ("Families | Brontë Family
 
 Nine are from a single session against the September release branch's tip;
 `06` and `13` were re-shot in October against the installed `4.0.723.0` MSIX
-(see "October 2026 release" below). Unlike
+(see "October 2026 release" below), and `02`, `04`, `05`, `06`, `07` and `13`
+in November against the installed `4.0.847.0` MSIX (see "November 2026
+release"). Unlike
 the previous set, no shot in this set displays the app version (that only ever
 appeared on the now-dropped home screen), so there's no version-pinning
 constraint on which commit they're built from.
@@ -96,6 +98,35 @@ crop.
   defaults. The README's "default name/date formats" meant removing the
   `NameFormatter.*`, `DateFormatter.*Format` and `DateSpanFormatter.*` keys
   (backed up first, restored after), not trusting a fresh install.
+
+## November 2026 release
+
+All ten were compared against the installed `4.0.847.0` MSIX, with the demo
+tree built by `RelativesCli` and the name and date format keys removed from
+`appconfig.json` for the session.
+
+- **`04-person.png`, `05-biography.png`, `06-family-tree.png` and
+  `13-family-tree-dark.png` were re-shot**, because each page's side menu gained
+  the fan chart button (◔). Same framing as before: `04` on the Armytage
+  engraving, `06` and `13` with Charlotte centred and *Relatives* on. The 🔀
+  button is dimmed in both tree shots, since nothing is arranged in this
+  project.
+- **`02-families.png` was re-shot**, because the menu gained the Date tools
+  button. Charlotte was marked as the main person first: without a mark the
+  ⭐ and 🌳 items are now disabled and dim (#499), which reads as broken in a
+  Store shot.
+- **`07-statistics.png` was re-shot though its page is unchanged**, only so its
+  header spells the project "Brontë" like the other new shots. `RelativesCli`
+  now stores the GEDCOM file's name as the project name (#610), so the name no
+  longer has to be written by hand.
+- **`08-gallery.png`, `09-kinship-finder.png`, `10-date-calendar.png` and
+  `11-settings.png` were compared and kept.** Their pages show no change. `08`
+  still says "Bronte", and `09` shows Patrick's age a day short of what the
+  app now prints, after the date-span fix in #504.
+- **`03-family.png`, the spare, was not compared.**
+- **No fan chart shot was added.** The demo tree has only two generations above
+  Charlotte, so its fan chart is six thin segments and undersells the feature.
+  A fan chart screenshot needs a deeper tree.
 
 ## Still worth fixing
 
