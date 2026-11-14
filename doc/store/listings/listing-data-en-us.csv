@@ -47,24 +47,22 @@ YOUR DATA, YOUR DEVICE
 Genealogy Tree has no account system, no cloud sync, no analytics and no ads. Everything lives in your Documents folder. The only times the app reaches the internet are when you put a web link or a web image into a biography and then open it, and when you agree to download a photo enhancement model on Windows. Photos are enhanced on your device and never leave it."
 ReleaseNotes,3,Text,,"New
 
-- Export the whole project as an HTML website: a page for every person and family, a main-person page with the family tree, and full-size photo previews.
-- The family tree is laid out as a tidy pedigree, with children centred under their parents.
-- Drag people into place on the family tree, or right-click to hide someone from it; both are remembered per project.
-- Hovering a person on the tree highlights them and their lines.
-- Captions for a person's photos and attachments.
-- The biography editor has formatting buttons (bold, italic, heading, list), and its toolbar stays in view on a long biography.
-- Insert a photo into a biography as a picture at a chosen width, or as a plain link.
-- Image attachments, and images in a biography, open in the app's own photo viewer.
-- Right-click a person's name, dates or biography to copy it.
-- GEDCOM import keeps a Russian surname's male and female forms under one family.
-- Gallery items open with a single click, sort by title, and search matches titles and file names.
+- Enhance photos on your own PC: enlarge a small scan, colorize a black-and-white photo or repair scratches. It is offered on every photo and image attachment, and the result is saved as a captioned copy beside the original. Each step downloads its model once, after asking.
+- A fan chart of a person's ancestors: up to ten generations in a half, three-quarter or full circle.
+- Date tools: convert a date between the Gregorian, Julian, Hebrew and French Republican calendars, and measure the time between two dates.
+- Enter a date in its original calendar in the date dialog; the app converts it.
+- Hovering a person on the family tree or the fan chart shows a card with their photo, name and life dates, plus their generation (such as Baby Boomers) for anyone born since 1883.
+- Statistics for a single family, from the family's page.
+- Image attachments show a thumbnail, which opens the photo viewer.
+- With another calendar chosen, a partial date shows its year in that calendar.
 
 Fixed
 
-- A biography typed while creating a new person was lost on save.
-- The editor could freeze on a long biography with many pictures.
-- Closing a photo preview could jump to a different person.
-- A crash in the Settings calendar preview on 29 February."
+- Changing an approximate date could drop its ""about"".
+- A GEDCOM export could point a godparent or witness link at the wrong person.
+- Rotated phone photos had sideways thumbnails, and the wrong proportions in a biography or an exported website.
+- Ages and other date spans could be a day or two off around a month's end.
+- Copying text could fail while the clipboard was briefly busy."
 Title,4,Text,,Genealogy Tree
 ShortTitle,5,Text,,
 SortTitle,6,Text,,
@@ -369,23 +367,23 @@ OptionalPromo1000x800,612,Relative path (or URL to file in Partner Center),,
 OptionalPromo414x180,613,Relative path (or URL to file in Partner Center),,
 Feature1,700,Text,,"Scalable, pannable family tree of ancestors and descendants, re-centred on any relative with a click, more generations on demand"
 Feature2,701,Text,,"Drag people into place on the tree or hide them from it, remembered per project"
-Feature3,702,Text,,"Person pages with a main portrait, extra photos, a formatted biography and file attachments, each photo and file captioned"
-Feature4,703,Text,,"Kinship finder: the relationship between any two people, plus the full chain of relatives connecting them"
-Feature5,704,Text,,"Date calendar of births, wedding anniversaries and remembrances, with milestone years highlighted"
-Feature6,705,Text,,"Over twenty project statistics: lifespans, births by decade, common names, and where your data is incomplete"
-Feature7,706,Text,,"Project-wide gallery of every photo and attachment, linked back to its person or family"
-Feature8,707,Text,,"Filter any list by name with * and ? wildcards, by sex, or by year"
-Feature9,708,Text,,"Several names per person: first, patronymic, last, family - in a display order you choose"
-Feature10,709,Text,,"Approximate and unknown dates are first-class, and any date can display in the Gregorian, Julian, Hebrew or French Republican calendar"
-Feature11,710,Text,,"GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included"
-Feature12,711,Text,,"Ambiguous GEDCOM character sets are resolved by asking, not by guessing"
-Feature13,712,Text,,"Export or import a whole project as a single .gt4 file, opening with a double-click once associated on Windows"
-Feature14,713,Text,,"Export the whole project as a self-contained HTML website, a page for every person and family"
-Feature15,714,Text,,"Mark a project's main person to open straight to them, or switch to read-only mode to browse without editing"
-Feature16,715,Text,,"Multiple independent projects, each a single file in your Documents folder, with restore points to roll back to"
-Feature17,716,Text,,"Light, dark or system theme, and app-wide text scaling with Ctrl + plus / minus / 0"
-Feature18,717,Text,,Built-in Brontë family demo tree to explore before you start your own
-Feature19,718,Text,,"Interface in English, Russian, German, Spanish and French"
+Feature3,702,Text,,"Fan chart of a person's ancestors, up to ten generations in a half, three-quarter or full circle, re-centred on any ancestor with a click"
+Feature4,703,Text,,"Person pages with a main portrait, extra photos, a formatted biography and file attachments, each photo and file captioned"
+Feature5,704,Text,,"Photo enhancement on your own PC: enlarge a small scan, colorize a black-and-white photo or repair scratches, saved as a copy beside the original"
+Feature6,705,Text,,"Kinship finder: the relationship between any two people, plus the full chain of relatives connecting them"
+Feature7,706,Text,,"Date calendar of births, wedding anniversaries and remembrances, with milestone years highlighted"
+Feature8,707,Text,,"Date tools: convert a date between the Gregorian, Julian, Hebrew and French Republican calendars, and measure the time between two dates"
+Feature9,708,Text,,"Over twenty project statistics: lifespans, births by decade, common names, where your data is incomplete; or statistics for one family alone"
+Feature10,709,Text,,"Project-wide gallery of every photo and attachment, linked back to its person or family"
+Feature11,710,Text,,"Filter any list by name with * and ? wildcards, by sex, or by year"
+Feature12,711,Text,,"Several names per person: first, patronymic, last, family - in a display order you choose"
+Feature13,712,Text,,"Approximate and unknown dates are first-class, and dates can be entered and displayed in the Gregorian, Julian, Hebrew or French Republican calendar"
+Feature14,713,Text,,"GEDCOM 5.5.1 import and export that preserves tags the app doesn't model natively, family photos and attachments included, and asks about an ambiguous character set instead of guessing"
+Feature15,714,Text,,"Export or import a whole project as a single .gt4 file, opening with a double-click once associated on Windows"
+Feature16,715,Text,,"Export the whole project as a self-contained HTML website, a page for every person and family"
+Feature17,716,Text,,"Mark a project's main person to open straight to them, or switch to read-only mode to browse without editing"
+Feature18,717,Text,,"Multiple independent projects, each a single file in your Documents folder, with restore points to roll back to, and a built-in Brontë family demo tree to explore first"
+Feature19,718,Text,,"Light, dark or system theme, app-wide text scaling with Ctrl + plus / minus / 0, and an interface in English, Russian, German, Spanish and French"
 Feature20,719,Text,,"No account, no cloud sync, no subscription, no ads, no analytics"
 MinimumHardwareReq1,800,Text,,
 MinimumHardwareReq2,801,Text,,
