@@ -75,7 +75,8 @@ internal class ProjectList : IProjectList
     var origin = new FileDescription(dir, projectFileName, IProjectDocument.MimeType);
     var temp = GetCacheFileDescription(projectFileName);
     using (var file = _FileSystem.OpenWriteStream(temp)) file.Close();
-    var project = await ProjectDocument.CreateNewAsync(_FileSystem.ToPath(temp), projectName, projectDescription, token);
+    var tempPath = _FileSystem.ToPath(temp);
+    var project = await ProjectDocument.CreateNewAsync(tempPath, projectName, projectDescription, token);
     await project.DisposeAsync();
     _FileSystem.Move(temp, origin);
 
