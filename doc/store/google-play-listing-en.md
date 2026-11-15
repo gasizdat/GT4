@@ -150,7 +150,7 @@ Books + reference. Contact details as above.
 
 ```
 <en-US>
-First release on Google Play. Build your family tree on your phone, explore the Brontë demo tree, import and export GEDCOM, and keep every project as a file on your own device.
+First release on Google Play. Build your family tree on your phone, explore the Brontë demo tree, import and export GEDCOM, and keep every project as a file on your own device. No ads, no payments, no account — just your family history.
 </en-US>
 ```
 
