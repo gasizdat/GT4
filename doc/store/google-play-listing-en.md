@@ -1,6 +1,8 @@
-# Google Play listing — Genealogy Tree (en-US)
+# Google Play listing — Genealogy Tree (en-GB)
 
-The Play counterpart of [microsoft-store-listing-en.md](microsoft-store-listing-en.md).
+The default store listing language is English (United Kingdom), `en-GB`, which
+Play picked when the app was created; the copy's British spelling ("centred",
+"humour") matches it. The Play counterpart of [microsoft-store-listing-en.md](microsoft-store-listing-en.md).
 Every claim in the copy is traced in [claim-sources.md](claim-sources.md); the
 Android-specific limits that shaped it are listed under "What the copy leaves
 out" below. Images live in [play/](play/README.md).
@@ -107,8 +109,8 @@ permissions or the network claim in [claim-sources.md](claim-sources.md) change.
 **Privacy policy** — the URL above. Its "On Android" section was rewritten for
 this release (no storage permission, PR #621).
 
-**App access** — "All functionality is available without any special access."
-No account or sign-in exists.
+**Sign-in details** (formerly "App access") — all functionality is available
+without any access restrictions. No account or sign-in exists.
 
 **Ads** — "No, my app does not contain ads."
 
@@ -117,13 +119,16 @@ violence, fear, sexual content, crude humour, profanity, drugs, alcohol, tobacco
 or gambling. Users cannot talk to or share content with other users inside the
 app; an export goes to the system share sheet, not to other users of the app.
 No location sharing, no digital purchases, no built-in web browser (a biography
-link opens the system browser). Expect Everyone / PEGI 3, matching the Store's
-3+.
+link opens the system browser), not primarily news or education. The ratings
+issued on 15 November 2026: ESRB Everyone, PEGI 3, USK all ages, ClassInd all
+ages, 3+ elsewhere, no content descriptors — matching the Store's 3+.
 
-**Target audience and content** — pick only age groups of 13 and over (18 and
-over alone is simplest). The app suits any age, but naming an under-13 group
-brings the app under Play's Families policy, which adds review requirements and
-buys nothing here. The field doesn't stop anyone younger installing it.
+**Target audience and content** — 13–15, 16–17 and 18 and over. The app suits
+any age, but naming an under-13 group brings the app under Play's Families
+policy, which adds review requirements and buys nothing here. 18 and over alone
+is not simpler: the form warns that it can restrict availability, which would
+shut out a teenager doing a family-history project. With no under-13 group, Play
+skips the rest of the form.
 
 **Data safety** — "Does your app collect or share any of the required user data
 types?" **No.** Play counts data as collected when the app transmits it off the
@@ -139,27 +144,50 @@ back from the bundle with bundletool).
 **Government apps, financial features, health, news** — none apply.
 
 **Store settings** — category **Books & Reference**, matching the Store's
-Books + reference. Contact details as above.
+Books + reference. Tags: Books & reference, Lifestyle, Notebook (Play has no
+genealogy tag; Privacy & security would file the app with VPNs and password
+managers). Contact details as above, with no phone number, since Play shows it
+publicly.
 
 ## Releases
 
 **Build and upload**: see "Google Play" in
 [release-and-submission.md](release-and-submission.md).
 
-**Release notes** (`en-US`, 500 max) for the first release:
+**Release notes** (500 max) for the first release. The tag must name a store
+listing language: 855 went out tagged `en-US`, which the `en-GB`-only listing
+doesn't have, so use `en-GB` from the next release on:
 
 ```
-<en-US>
+<en-GB>
 First release on Google Play. Build your family tree on your phone, explore the Brontë demo tree, import and export GEDCOM, and keep every project as a file on your own device. No ads, no payments, no account — just your family history.
-</en-US>
+</en-GB>
 ```
+
+Two warnings appear on every release and need nothing: no deobfuscation file
+(the build doesn't run R8, so there is no mapping to upload) and no native debug
+symbols (the native code is the .NET runtime's, and .NET produces no symbols
+file in the form Play wants).
 
 **Testing before production.** A personal developer account created after
 13 November 2023 must run a closed test with at least 12 testers who stay opted
 in for 14 consecutive days before it can apply for production access. Internal
 testing (up to 100 testers) is available immediately but doesn't count toward
-that. Testers can be a Google Group or an email list.
+that.
+
+The closed test ("Closed testing - Alpha") is open in all countries and draws
+its testers from the Google Group `gt4-testers@googlegroups.com`: anyone can
+join, only owners can post, only managers can see the member list. Feedback
+goes to `https://github.com/gasizdat/GT4/issues`. A tester joins the group with
+the account their phone's Play Store uses, then opens the track's opt-in link,
+which works only once Google has approved the release. Version code 855 went to
+review for it on 15 November 2026.
 
 **Play App Signing.** On the first upload, accept the Google-generated app
 signing key. The key that signs the bundle locally is then only the upload key;
-if it is lost, Play Console support can register a new one.
+if it is lost, Play Console support can register a new one. Both certificates
+are under **Protected with Play → Play Store protection → Play app signing**:
+the upload key certificate's SHA-256 is
+`E4:34:28:87:B7:E4:B2:C6:21:B9:0C:A1:09:90:7B:E1:16:B9:6C:99:AB:D4:DC:6A:A3:9A:AD:9F:AF:55:97:ED`
+(`gt4-upload.jks`), and the app signing key's, the one installed apps carry, is
+`A0:A7:1B:BF:78:8D:56:EE:E8:6A:13:EF:8C:25:3B:0E:F2:65:32:60:52:B7:41:8A:A2:7E:05:9B:D1:B0:49:05`.
