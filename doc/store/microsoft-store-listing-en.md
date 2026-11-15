@@ -7,8 +7,8 @@ Source copy for the Partner Center listing of **Genealogy Tree**
 actually gets imported into Partner Center**, together with the screenshots
 beside it, as one folder import (see release-and-submission.md) — update it
 alongside this file rather than retyping fields into the UI by hand. This file stays the rationale layer: why each
-claim is worded the way it is, character-limit tracking, and the Play
-appendix, none of which the CSV carries. When copy changes, edit the prose
+claim is worded the way it is and character-limit tracking, neither of which
+the CSV carries. When copy changes, edit the prose
 here first, then carry the same wording into the CSV in Partner Center's
 plain-text style (see the note below).
 
@@ -46,7 +46,8 @@ family calendar. No account, no cloud.
 
 *About 5,990 characters once the source line wraps below are unwrapped into
 single spaces, counting the `###` and `-` markers. Well inside the 10,000
-limit; see the Play appendix, where it matters.*
+limit; Play's 4,000 is where it matters (see the Google Play section at the
+end).*
 
 **Genealogy Tree keeps your family history where it belongs: on your own
 computer.** There is no account to create, no server to sync with and no
@@ -252,33 +253,7 @@ version is what counts against it.*
 
 ---
 
-## Appendix — Google Play (draft, if and when the Android build ships)
+## Google Play
 
-Play's fields are shorter and its assets differ: **app title ≤30 chars**,
-**short description ≤80 chars**, **full description ≤4,000 chars**, plus a
-mandatory **1024×500 feature graphic** and **portrait phone screenshots** — none
-of which the Windows capture pass produces. Treat this as a starting point, not
-a ready submission.
-
-**Privacy policy URL** (required; Play takes no pasted text):
-`https://gasizdat.github.io/GT4/privacy.html`. Website:
-`https://gasizdat.github.io/GT4/`. Check before submitting whether the
-declared `READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` permissions need a Play
-permissions declaration, given the app itself reads only its project files.
-
-**Title:** Genealogy Tree (14 chars)
-
-**Short description:** Your family tree, offline and private. GEDCOM in and
-out, photos, kinship tools. (80 chars)
-
-**Full description:** the Description above is about 5,990 characters against
-Play's 4,000 limit, so it no longer fits as-is and a section has to be cut, not
-just trimmed. Play
-also renders no rich text, so the `###` and `**` markers have to go and
-whatever you put in their place counts too. Four edits are needed regardless:
-replace the Ctrl + plus / minus / 0 shortcut with the pinch-to-zoom gesture
-Android uses for the same thing, drop the "your computer" framing in the
-opening line and the closing section, which reads oddly on a phone, drop the
-right-click claims (copying text, hiding someone from the tree), which have no
-Android gesture yet, and drop photo enhancement and its model download, which
-are Windows only.
+The Play listing, cut from the Description above to fit 4,000 characters and
+adapted for Android, is in [google-play-listing-en.md](google-play-listing-en.md).

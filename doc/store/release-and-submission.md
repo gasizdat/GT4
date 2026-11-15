@@ -277,6 +277,76 @@ order. Every claim in the copy is traced in
 [claim-sources.md](claim-sources.md); fix the CSV, this file's prose copy, and
 that table together when behaviour changes.
 
+## Google Play
+
+`release.yml` builds Windows only. The Android bundle is built and signed
+locally from the release branch, because the upload key must not leave the
+developer's machine. The listing text, Play Console answers and graphics are in
+[google-play-listing-en.md](google-play-listing-en.md).
+
+**Version.** The version code is the commit count, like the MSIX build field,
+so build from the release branch tip: a bundle built from master would carry a
+lower code than the Windows release of the same code. The version name stays
+`4.0`. Play orders uploads by version code alone and refuses one that isn't
+higher than every code it has seen, in any track.
+
+**Upload key.** `%USERPROFILE%\gt4-upload.jks`, alias `gt4-upload`, created with
+the JDK's `keytool -genkeypair -keyalg RSA -keysize 2048 -validity 10000`. Its
+certificate fingerprint is SHA-256
+`E4:34:28:87:B7:E4:B2:C6:21:B9:0C:A1:09:90:7B:E1:16:B9:6C:99:AB:D4:DC:6A:A3:9A:AD:9F:AF:55:97:ED`,
+which Play Console shows as the upload certificate. Google holds the app
+signing key (Play App Signing). The password never goes on a command line or
+into a chat: the build reads it from a file created with `Read-Host
+-AsSecureString` and readable only by the owner, deleted again after the build
+if you prefer.
+
+```powershell
+# clear stale generated manifests and outputs first (see the MSIX note above)
+Remove-Item -Recurse -Force UI\App\obj\AppAndroidOnly\Release, UI\App\bin\Release\net10.0-android
+$ks = "$env:USERPROFILE\gt4-upload.jks"; $pf = "$env:USERPROFILE\gt4-upload.pass"
+dotnet publish UI\App\AppAndroidOnly.csproj -c Release -f net10.0-android `
+  -p:AndroidKeyStore=true "-p:AndroidSigningKeyStore=$ks" -p:AndroidSigningKeyAlias=gt4-upload `
+  "-p:AndroidSigningStorePass=file:$pf" "-p:AndroidSigningKeyPass=file:$pf"
+```
+
+Upload `UI\App\bin\Release\net10.0-android\publish\com.gasizdat.gt4-Signed.aab`,
+not the unsigned `com.gasizdat.gt4.aab` beside it.
+
+**Read it back before uploading.** bundletool ships with the .NET Android
+workload:
+
+```powershell
+$java = "C:\Program Files\Android\openjdk\jdk-21.0.8\bin\java.exe"
+$bt = (Get-ChildItem "C:\Program Files\dotnet\packs\Microsoft.Android.Sdk.Windows\*\tools\bundletool.jar" | Select-Object -Last 1).FullName
+& $java -jar $bt dump manifest --bundle <aab>   # versionCode, minSdk 29, targetSdk, permissions
+& "C:\Program Files\Android\openjdk\jdk-21.0.8\bin\keytool.exe" -printcert -jarfile <aab>   # upload fingerprint
+```
+
+The permissions should be `INTERNET`, `ACCESS_NETWORK_STATE` and the
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` the SDK adds, nothing else. Any
+storage permission brings back a Play declaration the app can't justify (PR
+#621). jarsigner's "certificate chain is invalid" warning is expected for a
+self-signed upload key.
+
+Play also rejects native libraries not aligned for 16 KB memory pages (apps
+targeting Android 15 and later). .NET 10's are; to re-check, read each
+`base/lib/*/*.so` in the bundle and confirm every `PT_LOAD` segment's `p_align`
+is at least `0x4000`.
+
+**Before uploading**, install a Release build on a phone and open the demo
+tree: a build that runs on Windows says nothing about MediaStore. An
+upload-signed APK won't install over a debug-signed one, and uninstalling first
+hides existing projects from the app (Android stops treating the files in
+`Documents/GT4` as the app's own; Import brings them back), so the practical
+check of the uploaded bundle itself is the closed-testing install from Play.
+
+**The first Android release** (November 2026) is version code 855, built from
+`release/rc-nov-14` at `0438bf54` (master `f2e6392a` merged in). The same day
+the Android device-test leg (`run-android-device-tests.ps1`) passed on that
+commit on a Samsung SM-A736B (Android 16): 867 tests, 864 passed, 0 failed, 3
+skipped (the sample-site generator, the standing failing canary and
+`PersonInfoViewLeakTests`' rebinding test, the last tracked by #271).
+
 ## Known at the time of this release
 
 - **Issue #281 is closed** (PR #369) — family photos and attachments now
